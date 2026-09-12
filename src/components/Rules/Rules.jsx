@@ -459,6 +459,15 @@ export default function Rules({ onOpenTab }) {
 
             <div className="p-4 rounded-2xl bg-gray-950/60 border border-gray-800 space-y-1.5">
               <strong className="text-yellow-400 font-bold text-sm block">
+                Como funciona o cadastro de novos usuários na liga?
+              </strong>
+              <p className="text-gray-300 leading-relaxed">
+                Ao criar uma conta ou entrar pela primeira vez, todo novo usuário ingressa com o perfil de <strong>👀 Convidado (Somente Visualização)</strong>. Para começar a palpitar e vincular seu time da NFL, basta que um <strong>👑 Comissário</strong> acesse a Gestão de Usuários e promova seu acesso para <strong>Apostador</strong>.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-gray-950/60 border border-gray-800 space-y-1.5">
+              <strong className="text-yellow-400 font-bold text-sm block">
                 Como solicito a alteração do meu time vinculado ou meu papel?
               </strong>
               <p className="text-gray-300 leading-relaxed">

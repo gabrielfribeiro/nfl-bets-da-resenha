@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
                 firebaseUser.displayName ||
                 firebaseUser.email.split("@")[0],
               photoURL: firebaseUser.photoURL || null,
-              role: isDefaultAdmin ? "admin" : "member",
+              role: isDefaultAdmin ? "admin" : "viewer",
               createdAt: new Date().toISOString(),
             };
             await saveUserProfile(firebaseUser.uid, profile);
@@ -141,7 +141,7 @@ export function AuthProvider({ children }) {
         email: cred.user.email,
         displayName: displayName || email.split("@")[0],
         photoURL: cred.user.photoURL || null,
-        role: isDefaultAdmin ? "admin" : "member",
+        role: isDefaultAdmin ? "admin" : "viewer",
         createdAt: new Date().toISOString(),
       };
       await saveUserProfile(cred.user.uid, newProfile);
@@ -172,7 +172,7 @@ export function AuthProvider({ children }) {
   const isDefaultAdmin = Boolean(
     user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
   );
-  const rawRole = userProfile?.role || (isDefaultAdmin ? "admin" : "member");
+  const rawRole = userProfile?.role || (isDefaultAdmin ? "admin" : "viewer");
   const isBlocked = !isDefaultAdmin && rawRole === "blocked";
   const role = isBlocked ? "blocked" : (isDefaultAdmin ? "admin" : rawRole);
 

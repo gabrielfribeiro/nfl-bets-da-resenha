@@ -125,7 +125,7 @@ export default function UserManager({ onBack }) {
   // Filtragem de Usuários
   const filteredUsers = users.filter((u) => {
     const isMaster = ADMIN_EMAILS.includes(u.email?.toLowerCase());
-    const effectiveRole = isMaster ? "admin" : u.role || "member";
+    const effectiveRole = isMaster ? "admin" : u.role || "viewer";
 
     const matchesRole =
       roleFilter === "all" ||
@@ -363,7 +363,7 @@ export default function UserManager({ onBack }) {
           <div className="divide-y divide-gray-800/80">
             {filteredUsers.map((u) => {
               const isMaster = ADMIN_EMAILS.includes(u.email?.toLowerCase());
-              const effectiveRole = isMaster ? "admin" : u.role || "member";
+              const effectiveRole = isMaster ? "admin" : u.role || "viewer";
               const isBlocked = effectiveRole === "blocked";
               const isCurrentUser = u.uid === currentUser?.uid;
               const isBusy = actionLoading[u.uid];
