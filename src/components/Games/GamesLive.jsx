@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { fetchNflScoreboard } from "../../services/espnApi";
 import { useBet } from "../../context/BetContext";
+import { useAuth } from "../../context/AuthContext";
 import { getLogoUrl } from "../../data/nflTeams";
 
 export default function GamesLive({ onQuickBet }) {
   const { selectedTeamIds, bets, updateBetResult, powerUpsList, currentRound } = useBet();
+  const { isAdmin, isAuthenticated, setShowLoginModal } = useAuth();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -466,29 +468,40 @@ export default function GamesLive({ onQuickBet }) {
 
                           {/* Quick result resolution if pending */}
                           {isPending ? (
-                            <div className="pt-2 border-t border-gray-800 flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex-shrink-0">
-                                Resolver:
-                              </span>
-                              <div className="flex-1 grid grid-cols-2 gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => updateBetResult(bet.id, "win")}
-                                  className="py-1.5 px-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-gray-950 font-black text-xs border border-emerald-500/40 transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
-                                >
-                                  <span>✅</span>
-                                  <span>Green (+R$ {profit})</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => updateBetResult(bet.id, "loss")}
-                                  className="py-1.5 px-2 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black text-xs border border-red-500/40 transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
-                                >
-                                  <span>❌</span>
-                                  <span>Red (-R$ {bet.amount.toFixed(2)})</span>
-                                </button>
+                            isAdmin ? (
+                              <div className="pt-2 border-t border-gray-800 flex items-center gap-2">
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex-shrink-0">
+                                  Resolver:
+                                </span>
+                                <div className="flex-1 grid grid-cols-2 gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateBetResult(bet.id, "win")}
+                                    className="py-1.5 px-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-gray-950 font-black text-xs border border-emerald-500/40 transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
+                                  >
+                                    <span>✅</span>
+                                    <span>Green (+R$ {profit})</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateBetResult(bet.id, "loss")}
+                                    className="py-1.5 px-2 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black text-xs border border-red-500/40 transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
+                                  >
+                                    <span>❌</span>
+                                    <span>Red (-R$ {bet.amount.toFixed(2)})</span>
+                                  </button>
+                                </div>
                               </div>
-                            </div>
+                            ) : (
+                              <div className="pt-2 border-t border-gray-800 flex items-center justify-between text-xs">
+                                <span className="text-yellow-400/90 font-bold text-[11px] flex items-center gap-1">
+                                  <span>⏳</span> Aposta Pendente
+                                </span>
+                                <span className="text-gray-500 text-[10px] italic">
+                                  {isAuthenticated ? "Resolução restrita ao Comissário" : "Faça login como Comissário"}
+                                </span>
+                              </div>
+                            )
                           ) : (
                             <div className="pt-1.5 border-t border-gray-800 flex items-center justify-between text-xs">
                               <span className="text-[10px] text-gray-500 font-bold uppercase">
@@ -530,7 +543,13 @@ export default function GamesLive({ onQuickBet }) {
                   {onQuickBet && gameBets.length === 0 && (
                     <button
                       type="button"
-                      onClick={() => onQuickBet(game.awayTeam.id, game.homeTeam.id, selectedWeek)}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          setShowLoginModal(true);
+                          return;
+                        }
+                        onQuickBet(game.awayTeam.id, game.homeTeam.id, selectedWeek);
+                      }}
                       className="flex-shrink-0 px-3 py-1.5 rounded-xl font-black text-xs border transition-all flex items-center gap-1.5 shadow-sm bg-yellow-400/10 hover:bg-yellow-400 text-yellow-400 hover:text-gray-950 border-yellow-400/30 active:scale-95"
                     >
                       <span>⚡</span>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useBet } from "../../context/BetContext";
+import { useAuth } from "../../context/AuthContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 
 const RESULT_CONFIG = {
@@ -10,6 +11,7 @@ const RESULT_CONFIG = {
 
 export default function BetHistory() {
   const { bets, updateBetResult, deleteBet } = useBet();
+  const { isAdmin } = useAuth();
   const [filterResult, setFilterResult] = useState("all");
   const [filterTeam, setFilterTeam] = useState("all");
   const [expandedId, setExpandedId] = useState(null);
@@ -77,6 +79,7 @@ export default function BetHistory() {
             onToggle={() => setExpandedId(expandedId === bet.id ? null : bet.id)}
             onUpdateResult={updateBetResult}
             onDelete={deleteBet}
+            isAdmin={isAdmin}
           />
         ))}
       </div>
@@ -88,7 +91,7 @@ export default function BetHistory() {
   );
 }
 
-function BetRow({ bet, expanded, onToggle, onUpdateResult, onDelete }) {
+function BetRow({ bet, expanded, onToggle, onUpdateResult, onDelete, isAdmin }) {
   const teamA = getTeamById(bet.teamAId);
   const teamB = getTeamById(bet.teamBId);
   const bettingOn = getTeamById(bet.bettingOnTeamId);
@@ -160,30 +163,38 @@ function BetRow({ bet, expanded, onToggle, onUpdateResult, onDelete }) {
           <p className="text-gray-600 text-xs mb-3">{new Date(bet.createdAt).toLocaleString("pt-BR")}</p>
 
           {/* Actions */}
-          <div className="flex gap-2 flex-wrap">
-            {bet.result === "pending" && (
-              <>
-                <button
-                  onClick={() => onUpdateResult(bet.id, "win")}
-                  className="flex-1 py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-semibold hover:bg-green-500/30"
-                >
-                  ✅ Bateu
-                </button>
-                <button
-                  onClick={() => onUpdateResult(bet.id, "loss")}
-                  className="flex-1 py-2 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/30"
-                >
-                  ❌ Perdeu
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => { if (confirm("Excluir aposta?")) onDelete(bet.id); }}
-              className="py-2 px-3 rounded-lg bg-gray-800 border border-gray-700 text-gray-500 text-sm hover:text-red-400 hover:border-red-500/30"
-            >
-              🗑️
-            </button>
-          </div>
+          {isAdmin ? (
+            <div className="flex gap-2 flex-wrap">
+              {bet.result === "pending" && (
+                <>
+                  <button
+                    onClick={() => onUpdateResult(bet.id, "win")}
+                    className="flex-1 py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-semibold hover:bg-green-500/30"
+                  >
+                    ✅ Bateu
+                  </button>
+                  <button
+                    onClick={() => onUpdateResult(bet.id, "loss")}
+                    className="flex-1 py-2 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/30"
+                  >
+                    ❌ Perdeu
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => { if (confirm("Excluir aposta?")) onDelete(bet.id); }}
+                className="py-2 px-3 rounded-lg bg-gray-800 border border-gray-700 text-gray-500 text-sm hover:text-red-400 hover:border-red-500/30"
+              >
+                🗑️
+              </button>
+            </div>
+          ) : (
+            <div className="pt-2 border-t border-gray-800/80 text-right">
+              <span className="text-[10px] text-gray-500 italic">
+                🔒 Ações restritas ao Comissário
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>
