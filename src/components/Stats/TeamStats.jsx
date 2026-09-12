@@ -19,18 +19,23 @@ export default function TeamStats({
   const { teams: leagueTeams, selectedTeamIds, currentRound, bets } = useBet();
   const { userProfile } = useAuth();
 
+  const safeSelectedIds = useMemo(
+    () => (Array.isArray(selectedTeamIds) ? selectedTeamIds : []),
+    [selectedTeamIds]
+  );
+
   // Mode: 'h2h' (Confronto) | 'single' (Raio-X Individual)
   const [mode, setMode] = useState(initialTeamA && initialTeamB ? "h2h" : "h2h");
 
   // Selection state
   const [teamAId, setTeamAId] = useState(
-    initialTeamA || (selectedTeamIds[0] || "kc")
+    initialTeamA || safeSelectedIds[0] || "kc"
   );
   const [teamBId, setTeamBId] = useState(
-    initialTeamB || (selectedTeamIds[1] || "phi")
+    initialTeamB || safeSelectedIds[1] || "phi"
   );
   const [singleTeamId, setSingleTeamId] = useState(
-    initialTeamA || (selectedTeamIds[0] || "kc")
+    initialTeamA || safeSelectedIds[0] || "kc"
   );
 
   // Filter for single team selector: 'league' | 'all' | 'afc' | 'nfc'
@@ -158,7 +163,8 @@ export default function TeamStats({
   const availableTeams = useMemo(() => {
     let list = NFL_TEAMS;
     if (singleFilter === "league") {
-      list = NFL_TEAMS.filter((t) => selectedTeamIds.includes(t.id));
+      list = NFL_TEAMS.filter((t) => safeSelectedIds.includes(t.id));
+      if (list.length === 0) list = NFL_TEAMS;
     } else if (singleFilter === "afc") {
       list = NFL_TEAMS.filter((t) => t.conference === "AFC");
     } else if (singleFilter === "nfc") {
@@ -176,7 +182,7 @@ export default function TeamStats({
     }
 
     return list;
-  }, [singleFilter, singleSearch, selectedTeamIds]);
+  }, [singleFilter, singleSearch, safeSelectedIds]);
 
   // Team objects & colors
   const teamA = getTeamById(teamAId) || NFL_TEAMS[0];
@@ -187,14 +193,19 @@ export default function TeamStats({
   const themeColor = singleTeam?.color || "#eab308";
   const themeAccent = singleTeam?.accent || "#ca8a04";
 
-  // League owner & pot data
+  // League owner & pot data (safe for both object and array)
   const getLeagueData = (teamId) => {
-    const found = leagueTeams?.find((t) => t.id === teamId);
+    if (!teamId) return { owner: "Livre / Sem Dono", pot: 0, initialPot: 0, isInLeague: false };
+    const teamObj =
+      Array.isArray(leagueTeams)
+        ? leagueTeams.find((t) => t.id === teamId)
+        : (leagueTeams && typeof leagueTeams === "object" ? leagueTeams[teamId] : null);
+
     return {
-      owner: found?.owner || "Livre / Sem Dono",
-      pot: found?.pot || 0,
-      initialPot: found?.initialPot || 0,
-      isInLeague: selectedTeamIds.includes(teamId),
+      owner: teamObj?.owner || "Livre / Sem Dono",
+      pot: typeof teamObj?.pot === "number" ? teamObj.pot : 0,
+      initialPot: typeof teamObj?.initialPot === "number" ? teamObj.initialPot : 0,
+      isInLeague: safeSelectedIds.includes(teamId),
     };
   };
 
@@ -438,14 +449,14 @@ export default function TeamStats({
                   className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-black text-white focus:outline-none focus:border-yellow-400 transition-colors"
                 >
                   <optgroup label="Times no Bolão">
-                    {NFL_TEAMS.filter((t) => selectedTeamIds.includes(t.id)).map((t) => (
+                    {NFL_TEAMS.filter((t) => safeSelectedIds.includes(t.id)).map((t) => (
                       <option key={t.id} value={t.id}>
                         🏈 {t.name} ({t.conference} {t.division})
                       </option>
                     ))}
                   </optgroup>
                   <optgroup label="Outros Times da NFL">
-                    {NFL_TEAMS.filter((t) => !selectedTeamIds.includes(t.id)).map((t) => (
+                    {NFL_TEAMS.filter((t) => !safeSelectedIds.includes(t.id)).map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.name} ({t.conference} {t.division})
                       </option>
@@ -474,14 +485,14 @@ export default function TeamStats({
                   className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-black text-white focus:outline-none focus:border-yellow-400 transition-colors"
                 >
                   <optgroup label="Times no Bolão">
-                    {NFL_TEAMS.filter((t) => selectedTeamIds.includes(t.id)).map((t) => (
+                    {NFL_TEAMS.filter((t) => safeSelectedIds.includes(t.id)).map((t) => (
                       <option key={t.id} value={t.id}>
                         🏈 {t.name} ({t.conference} {t.division})
                       </option>
                     ))}
                   </optgroup>
                   <optgroup label="Outros Times da NFL">
-                    {NFL_TEAMS.filter((t) => !selectedTeamIds.includes(t.id)).map((t) => (
+                    {NFL_TEAMS.filter((t) => !safeSelectedIds.includes(t.id)).map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.name} ({t.conference} {t.division})
                       </option>
