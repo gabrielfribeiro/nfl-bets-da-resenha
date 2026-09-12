@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import {
   onAuthChange,
   loginWithEmail,
+  loginWithGoogle,
   registerWithEmail,
   logoutUser,
   getUserProfile,
@@ -11,7 +12,7 @@ import {
 
 const AuthContext = createContext(null);
 
-const ADMIN_EMAILS = ["gabrielfribeiro44@gmail.com"];
+export const ADMIN_EMAILS = ["gabrielfribeiro44@gmail.com"];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -44,14 +45,29 @@ export function AuthProvider({ children }) {
               displayName:
                 firebaseUser.displayName ||
                 firebaseUser.email.split("@")[0],
+              photoURL: firebaseUser.photoURL || null,
               role: isDefaultAdmin ? "admin" : "member",
               createdAt: new Date().toISOString(),
             };
             await saveUserProfile(firebaseUser.uid, profile);
-          } else if (isDefaultAdmin && profile.role !== "admin") {
-            // Garante que o comissário sempre tenha role admin
-            profile.role = "admin";
-            await saveUserProfile(firebaseUser.uid, profile);
+          } else {
+            // Atualiza foto ou displayName caso tenham mudado
+            let needsUpdate = false;
+            const updatePayload = {};
+
+            if (isDefaultAdmin && profile.role !== "admin") {
+              profile.role = "admin";
+              updatePayload.role = "admin";
+              needsUpdate = true;
+            }
+            if (firebaseUser.photoURL && profile.photoURL !== firebaseUser.photoURL) {
+              profile.photoURL = firebaseUser.photoURL;
+              updatePayload.photoURL = firebaseUser.photoURL;
+              needsUpdate = true;
+            }
+            if (needsUpdate) {
+              await saveUserProfile(firebaseUser.uid, updatePayload);
+            }
           }
           setUserProfile(profile);
         } catch (err) {
@@ -91,6 +107,28 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const loginGoogle = useCallback(async () => {
+    setAuthError(null);
+    try {
+      const cred = await loginWithGoogle();
+      setShowLoginModal(false);
+      return cred.user;
+    } catch (err) {
+      let friendlyMessage = "Falha ao autenticar com o Google.";
+      if (err.code === "auth/popup-closed-by-user") {
+        friendlyMessage = "Login cancelado. O popup foi fechado antes de concluir.";
+      } else if (err.code === "auth/cancelled-popup-request") {
+        friendlyMessage = "Operação cancelada.";
+      } else if (err.code === "auth/popup-blocked") {
+        friendlyMessage = "Popup bloqueado pelo navegador. Permita popups para este site.";
+      } else if (err.message) {
+        friendlyMessage = err.message;
+      }
+      setAuthError(friendlyMessage);
+      throw new Error(friendlyMessage);
+    }
+  }, []);
+
   const register = useCallback(async (email, password, displayName) => {
     setAuthError(null);
     try {
@@ -100,6 +138,7 @@ export function AuthProvider({ children }) {
         uid: cred.user.uid,
         email: cred.user.email,
         displayName: displayName || email.split("@")[0],
+        photoURL: cred.user.photoURL || null,
         role: isDefaultAdmin ? "admin" : "member",
         createdAt: new Date().toISOString(),
       };
@@ -131,9 +170,11 @@ export function AuthProvider({ children }) {
   const isDefaultAdmin = Boolean(
     user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
   );
-  const role = userProfile?.role || (isDefaultAdmin ? "admin" : "viewer");
-  const isAdmin = role === "admin" || isDefaultAdmin;
-  const isMember = isAdmin || role === "member";
+  const rawRole = userProfile?.role || (isDefaultAdmin ? "admin" : "viewer");
+  const isBlocked = !isDefaultAdmin && rawRole === "blocked";
+  const role = isBlocked ? "blocked" : (isDefaultAdmin ? "admin" : rawRole);
+  const isAdmin = !isBlocked && (role === "admin" || isDefaultAdmin);
+  const isMember = !isBlocked && (isAdmin || role === "member");
   const isAuthenticated = Boolean(user);
 
   return (
@@ -141,9 +182,11 @@ export function AuthProvider({ children }) {
       value={{
         user,
         userProfile,
+        setUserProfile,
         role,
         isAdmin,
         isMember,
+        isBlocked,
         isAuthenticated,
         loading,
         showLoginModal,
@@ -151,6 +194,7 @@ export function AuthProvider({ children }) {
         authError,
         setAuthError,
         login,
+        loginGoogle,
         register,
         logout,
       }}

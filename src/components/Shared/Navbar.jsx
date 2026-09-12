@@ -170,6 +170,23 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               {isMuted ? "🔇" : "🔊"}
             </button>
 
+            {/* Admin Quick Link */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("users")}
+                title="Painel de Usuários e Permissões"
+                className={`h-11 hidden md:flex items-center justify-center gap-1.5 px-3.5 rounded-xl border text-xs font-black transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
+                  activeTab === "users"
+                    ? "bg-yellow-400 text-gray-950 border-yellow-400 shadow-md shadow-yellow-400/20"
+                    : "bg-gray-900/90 hover:bg-gray-800 text-yellow-400 border-yellow-400/30"
+                }`}
+              >
+                <span>👥</span>
+                <span>Usuários</span>
+              </button>
+            )}
+
             {/* Auth Profile / Login Button */}
             {isAuthenticated ? (
               <div className="relative flex-shrink-0">
@@ -179,9 +196,17 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                   title={`Conectado como ${userProfile?.displayName || user?.email}`}
                   className="h-11 px-3 bg-gray-900/90 hover:bg-gray-800 border border-gray-800 hover:border-gray-700 rounded-xl flex items-center gap-2 transition-all shadow-sm"
                 >
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-gray-950 font-black text-xs flex items-center justify-center flex-shrink-0">
-                    {(userProfile?.displayName || user?.email || "U")[0].toUpperCase()}
-                  </div>
+                  {userProfile?.photoURL ? (
+                    <img
+                      src={userProfile.photoURL}
+                      alt=""
+                      className="w-7 h-7 rounded-lg object-cover border border-white/10 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-gray-950 font-black text-xs flex items-center justify-center flex-shrink-0">
+                      {(userProfile?.displayName || user?.email || "U")[0].toUpperCase()}
+                    </div>
+                  )}
                   <div className="hidden md:flex flex-col text-left leading-none">
                     <span className="text-white font-bold text-xs max-w-[100px] truncate">
                       {userProfile?.displayName || user?.email?.split("@")[0]}
@@ -204,6 +229,21 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                         {isAdmin ? "👑 Comissário (Admin)" : "🏈 Apostador"}
                       </span>
                     </div>
+
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          setActiveTab("users");
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 text-xs text-yellow-400 hover:bg-yellow-400/10 font-bold flex items-center gap-2 transition-colors border-b border-gray-800/80"
+                      >
+                        <span>👥</span>
+                        <span>Gerenciar Usuários</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => {

@@ -6,7 +6,7 @@ import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 const PRESET_ODDS = ["1.30", "1.40", "1.50", "1.75", "2.00"];
 const POWER_ICONS = ["⚡", "🛡️", "🔥", "💎", "🎲", "👑", "🚀", "🍀", "🎯", "💣"];
 
-export default function Settings() {
+export default function Settings({ onOpenUserManager }) {
   const {
     teams,
     exportJSON,
@@ -557,6 +557,42 @@ export default function Settings() {
 
         {/* RIGHT COLUMN: Power-ups Config, Backup/Restore, Danger Zone (6 cols) */}
         <div className="lg:col-span-6 space-y-6">
+          {/* Card: Gestão de Usuários & Permissões (Admin Only) */}
+          {isAdmin && (
+            <div className="bg-gradient-to-br from-gray-900 to-gray-950 border border-yellow-500/30 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center text-xl">
+                    👥
+                  </div>
+                  <div>
+                    <h3 className="text-white font-black text-base">Gestão de Usuários & Acessos</h3>
+                    <p className="text-gray-400 text-xs">Exclusivo para Comissários</p>
+                  </div>
+                </div>
+
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-yellow-400/20 text-yellow-400 border border-yellow-400/30">
+                  Admin
+                </span>
+              </div>
+
+              <p className="text-gray-300 text-xs leading-relaxed mb-4">
+                Gerencie quem pode apostar, promova outros participantes a <strong>Comissários</strong> ou <strong>revogue acessos</strong> instantaneamente.
+              </p>
+
+              {onOpenUserManager && (
+                <button
+                  type="button"
+                  onClick={onOpenUserManager}
+                  className="w-full py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs transition-all shadow-md shadow-yellow-400/10 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95"
+                >
+                  <span>Gerenciar Usuários & Permissões</span>
+                  <span>➜</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Card: Configuração de Poderes */}
           <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">

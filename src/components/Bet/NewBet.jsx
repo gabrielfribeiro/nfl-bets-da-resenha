@@ -7,7 +7,7 @@ import MatchupModal from "./MatchupModal";
 
 export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
   const { selectedTeamIds, teams, bets, addBet, currentRound, getMinBet, MAX_ODD, powerUps, powerUpsList } = useBet();
-  const { isAuthenticated, setShowLoginModal } = useAuth();
+  const { isAuthenticated, isBlocked, setShowLoginModal } = useAuth();
 
   const [teamAId, setTeamAId] = useState(initialMatchup?.teamA || "");
   const [teamBId, setTeamBId] = useState(initialMatchup?.teamB || "");
@@ -587,18 +587,47 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
             </div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={!isValid}
-            className={`w-full py-4 rounded-2xl font-black text-base tracking-wide transition-all shadow-xl ${
-              isValid
-                ? "bg-yellow-400 text-gray-950 hover:bg-yellow-300 hover:scale-[1.01] shadow-yellow-400/20 cursor-pointer"
-                : "bg-gray-800 text-gray-600 border border-gray-700/50 cursor-not-allowed opacity-60"
-            }`}
-          >
-            Registrar Aposta
-          </button>
+          {/* Blocked Alert */}
+          {isBlocked && (
+            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2.5">
+              <span className="text-base">🚫</span>
+              <span>
+                Seu acesso está suspenso pelo Comissário da liga. Você não pode registrar apostas no momento.
+              </span>
+            </div>
+          )}
+
+          {/* Submit Button or Login Prompt */}
+          {!isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => setShowLoginModal(true)}
+              className="w-full py-4 rounded-2xl font-black text-base tracking-wide transition-all shadow-xl bg-yellow-400 text-gray-950 hover:bg-yellow-300 hover:scale-[1.01] shadow-yellow-400/20 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>🔑</span>
+              <span>Fazer Login para Apostar</span>
+            </button>
+          ) : isBlocked ? (
+            <button
+              type="button"
+              disabled
+              className="w-full py-4 rounded-2xl font-black text-base tracking-wide bg-red-950/40 text-red-400 border border-red-500/30 cursor-not-allowed opacity-70"
+            >
+              Acesso Revogado (Bloqueado)
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!isValid}
+              className={`w-full py-4 rounded-2xl font-black text-base tracking-wide transition-all shadow-xl ${
+                isValid
+                  ? "bg-yellow-400 text-gray-950 hover:bg-yellow-300 hover:scale-[1.01] shadow-yellow-400/20 cursor-pointer"
+                  : "bg-gray-800 text-gray-600 border border-gray-700/50 cursor-not-allowed opacity-60"
+              }`}
+            >
+              Registrar Aposta
+            </button>
+          )}
         </div>
       </form>
 

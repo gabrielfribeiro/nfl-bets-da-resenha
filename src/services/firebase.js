@@ -1,9 +1,11 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, collection, onSnapshot, setDoc } from "firebase/firestore";
 import {
   getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
   updateProfile,
@@ -51,6 +53,12 @@ export { app, db, auth };
 export async function loginWithEmail(email, password) {
   if (!auth) throw new Error("Firebase Auth não está configurado.");
   return await signInWithEmailAndPassword(auth, email.trim(), password);
+}
+
+export async function loginWithGoogle() {
+  if (!auth) throw new Error("Firebase Auth não está configurado.");
+  const provider = new GoogleAuthProvider();
+  return await signInWithPopup(auth, provider);
 }
 
 export async function registerWithEmail(email, password, displayName) {
@@ -107,6 +115,43 @@ export async function saveUserProfile(uid, profileData) {
     console.error("[Firebase] Erro ao salvar perfil do usuário:", err);
     return false;
   }
+}
+
+/**
+ * Inscreve-se em tempo real para a coleção de usuários cadastrados
+ */
+export function subscribeToUsers(onData, onError) {
+  if (!db) {
+    onData([]);
+    return () => {};
+  }
+
+  const usersCol = collection(db, "users");
+  return onSnapshot(
+    usersCol,
+    (snapshot) => {
+      const users = snapshot.docs.map((d) => ({ uid: d.id, ...d.data() }));
+      onData(users);
+    },
+    (err) => {
+      console.warn("[Firebase] Erro ao sincronizar usuários:", err);
+      if (onError) onError(err);
+    }
+  );
+}
+
+/**
+ * Altera a role de um usuário (admin | member | blocked)
+ */
+export async function updateUserRole(uid, role) {
+  return await saveUserProfile(uid, { role });
+}
+
+/**
+ * Associa um time da liga a um usuário
+ */
+export async function updateUserTeam(uid, teamId) {
+  return await saveUserProfile(uid, { teamId });
 }
 
 // ── FIRESTORE LEAGUE SYNC ───────────────────────────────────────────
