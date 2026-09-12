@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useBet } from "../../context/BetContext";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth, ADMIN_EMAILS } from "../../context/AuthContext";
 import { sounds } from "../../utils/sound";
 
 export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
@@ -20,6 +20,61 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
   const pendingBets = bets.filter((b) => b.result === "pending");
   const pendingCount = pendingBets.length;
   const menuRef = useRef(null);
+
+  const isMaster = Boolean(
+    user?.email && ADMIN_EMAILS?.includes(user.email.toLowerCase())
+  );
+
+  const getRoleInfo = () => {
+    if (isMaster) {
+      return {
+        label: "👑 Comissário",
+        badge: "👑 Comissário Master",
+        badgeClass: "bg-yellow-400 text-gray-950 font-black shadow-sm",
+        textColor: "text-yellow-400",
+      };
+    }
+    if (isAdmin) {
+      return {
+        label: "👑 Comissário",
+        badge: "👑 Comissário (Admin)",
+        badgeClass: "bg-yellow-400/20 text-yellow-400 border border-yellow-400/30",
+        textColor: "text-yellow-400",
+      };
+    }
+    if (isModerator || role === "moderator") {
+      return {
+        label: "⭐ Moderador",
+        badge: "⭐ Moderador",
+        badgeClass: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+        textColor: "text-purple-400",
+      };
+    }
+    if (role === "viewer") {
+      return {
+        label: "👀 Convidado",
+        badge: "👀 Convidado (Leitura)",
+        badgeClass: "bg-gray-800 text-gray-300 border border-gray-700",
+        textColor: "text-gray-400",
+      };
+    }
+    if (role === "blocked") {
+      return {
+        label: "🚫 Bloqueado",
+        badge: "🚫 Acesso Suspenso",
+        badgeClass: "bg-red-500/20 text-red-400 border border-red-500/30",
+        textColor: "text-red-400",
+      };
+    }
+    return {
+      label: "🏈 Apostador",
+      badge: "🏈 Apostador",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+      textColor: "text-emerald-400",
+    };
+  };
+
+  const roleInfo = getRoleInfo();
 
   // Fecha o menu de perfil ao clicar fora
   useEffect(() => {
@@ -233,8 +288,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                     <span className="text-white font-bold text-xs max-w-[100px] truncate">
                       {userProfile?.displayName || user?.email?.split("@")[0]}
                     </span>
-                    <span className="text-[9px] text-yellow-400 font-extrabold uppercase mt-0.5">
-                      {isAdmin ? "👑 Comissário" : "🏈 Apostador"}
+                    <span className={`text-[9px] ${roleInfo.textColor} font-extrabold uppercase mt-0.5`}>
+                      {roleInfo.label}
                     </span>
                   </div>
                   <span className="text-gray-400 text-[10px]">▼</span>
@@ -247,8 +302,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                         {userProfile?.displayName || "Apostador"}
                       </p>
                       <p className="text-gray-400 text-[10px] truncate mt-0.5">{user?.email}</p>
-                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-yellow-400/20 text-yellow-400 border border-yellow-400/30">
-                        {isAdmin ? "👑 Comissário (Admin)" : isModerator ? "⭐ Moderador" : "🏈 Apostador"}
+                      <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black ${roleInfo.badgeClass}`}>
+                        {roleInfo.badge}
                       </span>
                     </div>
 
