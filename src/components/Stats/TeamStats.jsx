@@ -401,9 +401,9 @@ export default function TeamStats({
                           setTeamAId(game.awayTeam.id);
                           setTeamBId(game.homeTeam.id);
                         }}
-                        className={`flex-shrink-0 flex items-center gap-2.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
+                        className={`flex-shrink-0 flex items-center gap-2.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all outline-none focus:outline-none ${
                           isSelected
-                            ? "bg-yellow-400/20 border-yellow-400 text-yellow-300 shadow-md shadow-yellow-400/10 scale-105"
+                            ? "bg-yellow-400 text-gray-950 border-yellow-400 font-black shadow-md shadow-yellow-400/20"
                             : "bg-gray-950/60 hover:bg-gray-800/80 border-gray-800 text-gray-300 hover:text-white"
                         }`}
                       >
@@ -1022,7 +1022,7 @@ export default function TeamStats({
               </div>
 
               {/* Team Pill Carousels */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
+              <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-thin">
                 {availableTeams.map((team) => {
                   const isSelected = team.id === singleTeamId;
                   return (
@@ -1030,18 +1030,17 @@ export default function TeamStats({
                       key={team.id}
                       type="button"
                       onClick={() => setSingleTeamId(team.id)}
-                      className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                      className={`flex-shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all outline-none focus:outline-none ${
                         isSelected
-                          ? "shadow-lg scale-105"
-                          : "bg-gray-950/60 hover:bg-gray-800 border-gray-800 text-gray-400 hover:text-white"
+                          ? "text-white font-black shadow-md border-transparent"
+                          : "bg-gray-950/70 hover:bg-gray-800/90 border-gray-800 text-gray-400 hover:text-white"
                       }`}
                       style={
                         isSelected
                           ? {
-                              backgroundColor: `${team.color}30`,
-                              borderColor: team.color,
+                              backgroundColor: team.color,
                               color: "#ffffff",
-                              boxShadow: `0 0 15px ${team.color}40`,
+                              boxShadow: `0 2px 14px ${team.color}60`,
                             }
                           : {}
                       }
@@ -1049,9 +1048,9 @@ export default function TeamStats({
                       <img
                         src={getLogoUrl(team)}
                         alt=""
-                        className="w-5 h-5 object-contain"
+                        className="w-5 h-5 object-contain flex-shrink-0"
                       />
-                      <span>{team.name}</span>
+                      <span className="truncate">{team.name}</span>
                     </button>
                   );
                 })}
