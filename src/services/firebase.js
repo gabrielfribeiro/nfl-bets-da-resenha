@@ -12,12 +12,12 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDrJF5HH-8-wwOCNdwDDo0-PHSJDkBantA",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "nfl-bets-da-resenha.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "nfl-bets-da-resenha",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "nfl-bets-da-resenha.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1014505973765",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1014505973765:web:6db9becbeb82d6db48546c",
 };
 
 export const DEFAULT_LEAGUE_ID =
