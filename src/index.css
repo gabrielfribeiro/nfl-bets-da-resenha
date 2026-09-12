@@ -57,7 +57,7 @@ select option {
   align-items: center;
   height: 100%;
   width: max-content;
-  animation: tickerMarquee 35s linear infinite;
+  animation: tickerMarquee 180s linear infinite;
 }
 
 .animate-marquee:hover {

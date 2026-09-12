@@ -6,7 +6,7 @@ import { getLogoUrl } from "../../data/nflTeams";
 
 export default function GamesLive({ onQuickBet }) {
   const { selectedTeamIds, bets, updateBetResult, powerUpsList, currentRound } = useBet();
-  const { isAdmin, isAuthenticated, setShowLoginModal } = useAuth();
+  const { isAdmin, canManageBets, isAuthenticated, setShowLoginModal } = useAuth();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -468,7 +468,7 @@ export default function GamesLive({ onQuickBet }) {
 
                           {/* Quick result resolution if pending */}
                           {isPending ? (
-                            isAdmin ? (
+                            canManageBets ? (
                               <div className="pt-2 border-t border-gray-800 flex items-center gap-2">
                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex-shrink-0">
                                   Resolver:
@@ -503,23 +503,39 @@ export default function GamesLive({ onQuickBet }) {
                               </div>
                             )
                           ) : (
-                            <div className="pt-1.5 border-t border-gray-800 flex items-center justify-between text-xs">
+                            <div className="pt-1.5 border-t border-gray-800 flex items-center justify-between text-xs flex-wrap gap-2">
                               <span className="text-[10px] text-gray-500 font-bold uppercase">
                                 Resultado:
                               </span>
                               {isWin && (
-                                <span className="text-emerald-400 font-black text-xs flex items-center gap-1 bg-emerald-500/15 px-2 py-0.5 rounded-lg border border-emerald-500/30">
-                                  ✅ Green Batido (+R$ {profit})
-                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-emerald-400 font-black text-xs flex items-center gap-1 bg-emerald-500/15 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                                    ✅ Green Batido (+R$ {profit})
+                                  </span>
+                                  {bet.resolvedBy && (
+                                    <span className="text-[10px] text-gray-400 flex items-center gap-1 bg-gray-900/90 px-2 py-0.5 rounded border border-gray-800">
+                                      <span>⚖️</span>
+                                      <span>{bet.resolvedBy.name}</span>
+                                    </span>
+                                  )}
+                                </div>
                               )}
                               {isLoss && (
-                                <span className="text-red-400 font-black text-xs flex items-center gap-1 bg-red-500/15 px-2 py-0.5 rounded-lg border border-red-500/30">
-                                  ❌ Red (
-                                  {bet.powerUp === "shield"
-                                    ? "🛡️ Protegido pelo escudo"
-                                    : `-R$ ${bet.amount.toFixed(2)}`}
-                                  )
-                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-red-400 font-black text-xs flex items-center gap-1 bg-red-500/15 px-2 py-0.5 rounded-lg border border-red-500/30">
+                                    ❌ Red (
+                                    {bet.powerUp === "shield"
+                                      ? "🛡️ Protegido pelo escudo"
+                                      : `-R$ ${bet.amount.toFixed(2)}`}
+                                    )
+                                  </span>
+                                  {bet.resolvedBy && (
+                                    <span className="text-[10px] text-gray-400 flex items-center gap-1 bg-gray-900/90 px-2 py-0.5 rounded border border-gray-800">
+                                      <span>⚖️</span>
+                                      <span>{bet.resolvedBy.name}</span>
+                                    </span>
+                                  )}
+                                </div>
                               )}
                             </div>
                           )}

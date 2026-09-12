@@ -1,16 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { sounds } from "../../utils/sound";
-
-const TABS = [
-  { id: "dashboard", label: "Dashboard", icon: "🏠" },
-  { id: "games",     label: "Jogos NFL", icon: "🏈" },
-  { id: "new-bet",   label: "Nova Aposta", icon: "➕" },
-  { id: "history",   label: "Histórico",  icon: "📋" },
-  { id: "achievements", label: "Conquistas", icon: "🏅" },
-  { id: "settings",  label: "Config",     icon: "⚙️" },
-];
 
 export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
   const {
@@ -23,11 +14,42 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     isCloudEnabled,
     cloudSyncStatus,
   } = useBet();
-  const { user, userProfile, isAdmin, isAuthenticated, logout, setShowLoginModal } = useAuth();
+  const { user, userProfile, isAdmin, isModerator, role, isAuthenticated, logout, setShowLoginModal } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMuted, setIsMuted] = useState(sounds.muted);
   const pendingBets = bets.filter((b) => b.result === "pending");
   const pendingCount = pendingBets.length;
+  const menuRef = useRef(null);
+
+  // Fecha o menu de perfil ao clicar fora
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [showUserMenu]);
+
+  // Tabs dinâmicas: apenas Admin vê Config; demais usuários vêem Perfil
+  const navTabs = [
+    { id: "dashboard", label: "Dashboard", icon: "🏠" },
+    { id: "games",     label: "Jogos NFL", icon: "🏈" },
+    { id: "new-bet",   label: "Nova Aposta", icon: "➕" },
+    { id: "history",   label: "Histórico",  icon: "📋" },
+    { id: "achievements", label: "Conquistas", icon: "🏅" },
+    ...(isAdmin
+      ? [{ id: "settings", label: "Config", icon: "⚙️" }]
+      : [{ id: "profile", label: "Perfil", icon: "👤" }]),
+  ];
 
   const toggleSound = () => {
     sounds.muted = !sounds.muted;
@@ -79,13 +101,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
             {/* Cloud Status Badge */}
             <button
               type="button"
-              onClick={() => setActiveTab("settings")}
+              onClick={() => setActiveTab(isAdmin ? "settings" : "profile")}
               title={
                 isCloudEnabled
                   ? cloudSyncStatus === "saving"
                     ? "Salvando na nuvem..."
                     : "Conectado ao Firebase Firestore (Tempo Real)"
-                  : "Modo Local (Offline). Clique para configurar o Firebase."
+                  : "Modo Local (Offline)."
               }
               className={`h-11 px-3 rounded-xl border text-xs font-black flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
                 isCloudEnabled
@@ -189,7 +211,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
 
             {/* Auth Profile / Login Button */}
             {isAuthenticated ? (
-              <div className="relative flex-shrink-0">
+              <div className="relative flex-shrink-0" ref={menuRef}>
                 <button
                   type="button"
                   onClick={() => setShowUserMenu(!showUserMenu)}
@@ -226,9 +248,22 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                       </p>
                       <p className="text-gray-400 text-[10px] truncate mt-0.5">{user?.email}</p>
                       <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-yellow-400/20 text-yellow-400 border border-yellow-400/30">
-                        {isAdmin ? "👑 Comissário (Admin)" : "🏈 Apostador"}
+                        {isAdmin ? "👑 Comissário (Admin)" : isModerator ? "⭐ Moderador" : "🏈 Apostador"}
                       </span>
                     </div>
+
+                    {/* Meu Perfil */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setActiveTab("profile");
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 text-xs text-white hover:bg-gray-800 font-bold flex items-center gap-2 transition-colors border-b border-gray-800/80"
+                    >
+                      <span>👤</span>
+                      <span>Meu Perfil & Liga</span>
+                    </button>
 
                     {isAdmin && (
                       <button
@@ -241,6 +276,20 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                       >
                         <span>👥</span>
                         <span>Gerenciar Usuários</span>
+                      </button>
+                    )}
+
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          setActiveTab("settings");
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 text-xs text-gray-300 hover:bg-gray-800 font-bold flex items-center gap-2 transition-colors border-b border-gray-800/80"
+                      >
+                        <span>⚙️</span>
+                        <span>Configurações do Bolão</span>
                       </button>
                     )}
 
@@ -308,7 +357,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-40 h-16">
         <div className="max-w-lg mx-auto flex h-full items-center">
-          {TABS.map((tab) => (
+          {navTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}

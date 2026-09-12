@@ -10,7 +10,7 @@ import {
   isFirebaseConfigured,
 } from "../services/firebase";
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export const ADMIN_EMAILS = ["gabrielfribeiro44@gmail.com"];
 
@@ -121,6 +121,8 @@ export function AuthProvider({ children }) {
         friendlyMessage = "Operação cancelada.";
       } else if (err.code === "auth/popup-blocked") {
         friendlyMessage = "Popup bloqueado pelo navegador. Permita popups para este site.";
+      } else if (err.code === "auth/unauthorized-domain") {
+        friendlyMessage = "Domínio não autorizado no Firebase Console. Adicione seu domínio em Firebase > Authentication > Settings > Authorized Domains.";
       } else if (err.message) {
         friendlyMessage = err.message;
       }
@@ -170,11 +172,19 @@ export function AuthProvider({ children }) {
   const isDefaultAdmin = Boolean(
     user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase())
   );
-  const rawRole = userProfile?.role || (isDefaultAdmin ? "admin" : "viewer");
+  const rawRole = userProfile?.role || (isDefaultAdmin ? "admin" : "member");
   const isBlocked = !isDefaultAdmin && rawRole === "blocked";
   const role = isBlocked ? "blocked" : (isDefaultAdmin ? "admin" : rawRole);
+
   const isAdmin = !isBlocked && (role === "admin" || isDefaultAdmin);
-  const isMember = !isBlocked && (isAdmin || role === "member");
+  const isModerator = !isBlocked && (isAdmin || role === "moderator");
+  const isMember = !isBlocked && (isAdmin || isModerator || role === "member");
+  const isViewer = role === "viewer";
+
+  // Permissões específicas de funcionalidades
+  const canConfigureLeague = isAdmin;
+  const canManageBets = isAdmin || isModerator;
+  const canPlaceBets = isMember && !isBlocked;
   const isAuthenticated = Boolean(user);
 
   return (
@@ -185,8 +195,13 @@ export function AuthProvider({ children }) {
         setUserProfile,
         role,
         isAdmin,
+        isModerator,
         isMember,
+        isViewer,
         isBlocked,
+        canConfigureLeague,
+        canManageBets,
+        canPlaceBets,
         isAuthenticated,
         loading,
         showLoginModal,

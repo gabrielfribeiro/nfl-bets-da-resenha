@@ -1,14 +1,13 @@
-name: Vercel Deploy & CI
+name: Deploy de Produção (Vercel)
 
 on:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy-production:
+    name: Deploy Vercel Produção
     runs-on: ubuntu-latest
 
     steps:
@@ -27,12 +26,13 @@ jobs:
       - name: Verify Build
         run: npm run build
 
-      - name: Trigger Vercel Deploy (via Deploy Hook if configured)
-        if: github.ref == 'refs/heads/main' && env.VERCEL_DEPLOY_HOOK != ''
+      - name: Disparar Deploy na Vercel
         env:
           VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
         run: |
-          echo "Disparando deploy na Vercel via Deploy Hook..."
-          curl -X POST "$VERCEL_DEPLOY_HOOK"
-
-
+          if [ -n "$VERCEL_DEPLOY_HOOK" ]; then
+            echo "Disparando deploy na Vercel via Deploy Hook..."
+            curl -X POST "$VERCEL_DEPLOY_HOOK"
+          else
+            echo "VERCEL_DEPLOY_HOOK não configurado."
+          fi

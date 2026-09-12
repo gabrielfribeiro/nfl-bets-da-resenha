@@ -177,6 +177,20 @@ export default function Settings({ onOpenUserManager }) {
     showFeedback("success", "Novo poder criado com sucesso!");
   };
 
+  if (!isAdmin) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center animate-in fade-in duration-200">
+        <div className="w-16 h-16 rounded-3xl bg-red-500/10 border border-red-500/30 text-3xl flex items-center justify-center mx-auto mb-4 text-red-400">
+          🔒
+        </div>
+        <h2 className="text-white font-black text-2xl mb-2">Acesso Restrito ao Comissário</h2>
+        <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+          As configurações da liga, limites de odd, cartas de poder e ações de reset são restritas exclusivamente a usuários com papel de <strong>👑 Comissário (Admin)</strong>.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 animate-in fade-in duration-200">
       {/* Page Header */}

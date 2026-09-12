@@ -9,6 +9,7 @@ import Achievements from "./components/Achievements/Achievements";
 import Navbar from "./components/Shared/Navbar";
 import Settings from "./components/Shared/Settings";
 import UserManager from "./components/Admin/UserManager";
+import UserProfile from "./components/User/UserProfile";
 import BroadcastTicker from "./components/Shared/BroadcastTicker";
 import LoginModal from "./components/Auth/LoginModal";
 
@@ -74,8 +75,21 @@ function AppContent() {
         )}
         {activeTab === "history" && <BetHistory />}
         {activeTab === "achievements" && <Achievements />}
-        {activeTab === "settings" && <Settings onOpenUserManager={() => setActiveTab("users")} />}
-        {activeTab === "users" && <UserManager onBack={() => setActiveTab("dashboard")} />}
+        {activeTab === "profile" && <UserProfile onOpenTab={setActiveTab} />}
+        {activeTab === "settings" && (
+          isAdmin ? (
+            <Settings onOpenUserManager={() => setActiveTab("users")} />
+          ) : (
+            <UserProfile onOpenTab={setActiveTab} />
+          )
+        )}
+        {activeTab === "users" && (
+          isAdmin ? (
+            <UserManager onBack={() => setActiveTab("dashboard")} />
+          ) : (
+            <UserProfile onOpenTab={setActiveTab} />
+          )
+        )}
       </main>
       {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
       <LoginModal />
