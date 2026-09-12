@@ -569,7 +569,10 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                       </button>
                     )}
 
-                    {onQuickBet && gameBets.length === 0 && (
+                    {onQuickBet &&
+                      gameBets.length === 0 &&
+                      (selectedTeamIds?.includes(game.awayTeam?.id) ||
+                        selectedTeamIds?.includes(game.homeTeam?.id)) && (
                       <button
                         type="button"
                         onClick={() => {

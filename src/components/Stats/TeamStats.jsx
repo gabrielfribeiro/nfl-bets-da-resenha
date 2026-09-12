@@ -252,6 +252,23 @@ export default function TeamStats({
     );
   }, [bets, singleTeamId]);
 
+  // Regras de bloqueio de aposta:
+  // 1. Pelo menos um time deve ser da nossa liga
+  const hasLeagueTeamInH2H = useMemo(() => {
+    return safeSelectedIds.includes(teamAId) || safeSelectedIds.includes(teamBId);
+  }, [safeSelectedIds, teamAId, teamBId]);
+
+  // 2. Não pode ter aposta já existente para esse confronto na rodada ou pendente
+  const existingH2HBet = useMemo(() => {
+    if (!bets || !teamAId || !teamBId) return null;
+    return bets.find(
+      (b) =>
+        ((b.teamAId === teamAId && b.teamBId === teamBId) ||
+         (b.teamAId === teamBId && b.teamBId === teamAId)) &&
+        (Number(b.round) === Number(currentRound) || b.result === "pending")
+    );
+  }, [bets, teamAId, teamBId, currentRound]);
+
   // Matchup Advantage Calculator
   const matchupScore = useMemo(() => {
     if (!statsA || !statsB) return { aWins: 0, bWins: 0, total: 0 };
@@ -589,7 +606,7 @@ export default function TeamStats({
                     </div>
                   </div>
 
-                  {onGoToNewBet && (
+                  {hasLeagueTeamInH2H && !existingH2HBet && onGoToNewBet && (
                     <button
                       type="button"
                       onClick={() => onGoToNewBet(teamAId, teamBId, currentRound)}
@@ -598,6 +615,12 @@ export default function TeamStats({
                       <span>⚡</span>
                       <span>Apostar Neste Jogo</span>
                     </button>
+                  )}
+                  {hasLeagueTeamInH2H && existingH2HBet && (
+                    <span className="text-[11px] text-yellow-400 font-bold bg-yellow-400/10 px-3 py-1.5 rounded-xl border border-yellow-400/30 flex items-center gap-1">
+                      <span>✓</span>
+                      <span>Já apostado</span>
+                    </span>
                   )}
                 </div>
 
@@ -1170,7 +1193,7 @@ export default function TeamStats({
                     </div>
                   )}
 
-                  {onGoToNewBet && (
+                  {singleLeagueData.isInLeague && onGoToNewBet && (
                     <button
                       type="button"
                       onClick={() => onGoToNewBet(singleTeamId, null, currentRound)}

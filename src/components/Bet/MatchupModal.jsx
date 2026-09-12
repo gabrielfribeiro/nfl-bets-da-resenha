@@ -84,8 +84,12 @@ export default function MatchupModal({
     }
   };
 
+  const hasLeagueTeam =
+    Boolean(tempA && selectedTeamIds.includes(tempA)) ||
+    Boolean(tempB && selectedTeamIds.includes(tempB));
+
   const handleConfirm = () => {
-    if (tempA && tempB) {
+    if (tempA && tempB && hasLeagueTeam) {
       onSelectMatchup(tempA, tempB);
       onClose();
     }
@@ -296,13 +300,16 @@ export default function MatchupModal({
                       <div
                         key={game.id}
                         onClick={() => {
+                          if (!involvesLeague) return;
                           setTempA(game.awayTeam.id);
                           setTempB(game.homeTeam.id);
                         }}
-                        className={`p-3 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                          isSelectedMatchup
-                            ? "border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/15"
-                            : "border-gray-800 bg-gray-950/60 hover:border-gray-700 hover:bg-gray-800/40"
+                        className={`p-3 rounded-2xl border-2 transition-all flex flex-col justify-between ${
+                          !involvesLeague
+                            ? "border-gray-800/40 bg-gray-950/30 opacity-40 cursor-not-allowed"
+                            : isSelectedMatchup
+                            ? "border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/15 cursor-pointer"
+                            : "border-gray-800 bg-gray-950/60 hover:border-gray-700 hover:bg-gray-800/40 cursor-pointer"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-800/60 text-[10px]">
@@ -315,9 +322,13 @@ export default function MatchupModal({
                               game.formattedTime
                             )}
                           </span>
-                          {involvesLeague && (
+                          {involvesLeague ? (
                             <span className="text-yellow-400 font-black bg-yellow-400/15 px-1.5 py-0.2 rounded border border-yellow-400/30">
                               ★ Bolão
+                            </span>
+                          ) : (
+                            <span className="text-gray-500 font-semibold">
+                              Fora do Bolão
                             </span>
                           )}
                         </div>
@@ -441,7 +452,9 @@ export default function MatchupModal({
         <div className="p-4 border-t border-gray-800 bg-gray-950/80 flex items-center justify-between flex-shrink-0">
           <span className="text-xs text-gray-400">
             {tempA && tempB
-              ? "Pronto para confirmar o confronto!"
+              ? hasLeagueTeam
+                ? "Pronto para confirmar o confronto!"
+                : "⚠️ Pelo menos um dos times deve pertencer ao Bolão (16 times)."
               : "Selecione 2 times para liberar a confirmação"}
           </span>
           <div className="flex gap-2">
@@ -454,10 +467,10 @@ export default function MatchupModal({
             </button>
             <button
               type="button"
-              disabled={!tempA || !tempB}
+              disabled={!tempA || !tempB || !hasLeagueTeam}
               onClick={handleConfirm}
               className={`px-5 py-2 rounded-xl font-black text-xs transition-all ${
-                tempA && tempB
+                tempA && tempB && hasLeagueTeam
                   ? "bg-yellow-400 text-gray-950 hover:bg-yellow-300 shadow-md shadow-yellow-400/20 cursor-pointer"
                   : "bg-gray-800 text-gray-600 cursor-not-allowed"
               }`}
