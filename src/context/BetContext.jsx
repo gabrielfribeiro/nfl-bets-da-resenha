@@ -11,6 +11,7 @@ import {
   saveLeagueData,
   DEFAULT_LEAGUE_ID,
 } from "../services/firebase";
+import { AuthContext } from "./AuthContext";
 
 const BetContext = createContext(null);
 
@@ -71,6 +72,30 @@ function triggerCelebration() {
 
 export function BetProvider({ children }) {
   const [state, setState] = useLocalStorage(STORAGE_KEY, initialState);
+  const auth = useContext(AuthContext);
+
+  const getCurrentUserResolver = useCallback(() => {
+    if (!auth?.user && !auth?.userProfile) {
+      return {
+        name: "Comissário",
+        email: null,
+        role: "admin",
+        photoURL: null,
+        at: new Date().toISOString(),
+      };
+    }
+    return {
+      name:
+        auth.userProfile?.displayName ||
+        auth.user?.displayName ||
+        auth.user?.email?.split("@")[0] ||
+        "Comissário",
+      email: auth.user?.email || null,
+      role: auth.role || (auth.isAdmin ? "admin" : "member"),
+      photoURL: auth.userProfile?.photoURL || auth.user?.photoURL || null,
+      at: new Date().toISOString(),
+    };
+  }, [auth]);
 
   // ── FIREBASE CLOUD SYNC ───────────────────────────────────────────
   const [isCloudEnabled] = useState(() => isFirebaseConfigured());
@@ -346,6 +371,12 @@ export function BetProvider({ children }) {
           ? Math.max(prev.globalMaxWon, betData.amount * betData.odd)
           : prev.globalMaxWon;
 
+      const isResolved = betData.result === "win" || betData.result === "loss";
+      const resolvedByInfo = isResolved
+        ? (betData.resolvedBy || getCurrentUserResolver())
+        : null;
+      const createdByInfo = betData.createdBy || getCurrentUserResolver();
+
       const newBet = {
         id,
         createdAt: new Date().toISOString(),
@@ -360,6 +391,8 @@ export function BetProvider({ children }) {
         potAfter: newPot,
         powerUp: usedPowerUp || null,
         note: betData.note || "",
+        createdBy: createdByInfo,
+        resolvedBy: resolvedByInfo,
       };
 
       return {
@@ -380,9 +413,9 @@ export function BetProvider({ children }) {
         },
       };
     });
-  }, [setState]);
+  }, [setState, getCurrentUserResolver]);
 
-  const updateBetResult = useCallback((betId, result) => {
+  const updateBetResult = useCallback((betId, result, customResolver) => {
     setState((prev) => {
       const bet = prev.bets.find((b) => b.id === betId);
       if (!bet || bet.result !== "pending") return prev;
@@ -434,8 +467,15 @@ export function BetProvider({ children }) {
           ? Math.max(prev.globalMaxWon, bet.amount * bet.odd)
           : prev.globalMaxWon;
 
+      const resolver =
+        result !== "pending"
+          ? (customResolver || getCurrentUserResolver())
+          : null;
+
       const updatedBets = prev.bets.map((b) =>
-        b.id === betId ? { ...b, result, potAfter: newPot } : b
+        b.id === betId
+          ? { ...b, result, potAfter: newPot, resolvedBy: resolver }
+          : b
       );
 
       return {
@@ -454,7 +494,7 @@ export function BetProvider({ children }) {
         },
       };
     });
-  }, [effectivePowerUpsList, setState]);
+  }, [effectivePowerUpsList, setState, getCurrentUserResolver]);
 
   const deleteBet = useCallback((betId) => {
     setState((prev) => ({

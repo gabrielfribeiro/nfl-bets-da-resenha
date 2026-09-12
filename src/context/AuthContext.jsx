@@ -10,7 +10,7 @@ import {
   isFirebaseConfigured,
 } from "../services/firebase";
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export const ADMIN_EMAILS = ["gabrielfribeiro44@gmail.com"];
 

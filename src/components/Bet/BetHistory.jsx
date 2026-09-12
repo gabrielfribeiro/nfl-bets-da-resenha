@@ -142,6 +142,12 @@ function BetRow({ bet, expanded, onToggle, onUpdateResult, onDelete, isAdmin }) 
               </span>
             )}
             {bet.note && <span className="text-gray-500 text-xs italic">"{bet.note}"</span>}
+            {bet.resolvedBy && (
+              <span className="bg-gray-800/90 text-gray-300 border border-gray-700/80 text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                <span className="text-yellow-400 text-xs">⚖️</span>
+                <span>{bet.resolvedBy.name}</span>
+              </span>
+            )}
           </div>
         </div>
         <div className="text-right flex-shrink-0">
@@ -160,7 +166,58 @@ function BetRow({ bet, expanded, onToggle, onUpdateResult, onDelete, isAdmin }) 
             <Detail label="Pote depois" value={`R$ ${bet.potAfter.toFixed(2)}`} color={potDiffColor} />
             <Detail label="Retorno total" value={`R$ ${(bet.amount * bet.odd).toFixed(2)}`} color="text-green-400" />
           </div>
-          <p className="text-gray-600 text-xs mb-3">{new Date(bet.createdAt).toLocaleString("pt-BR")}</p>
+
+          {/* Timeline & Resolution info */}
+          <div className="bg-black/30 border border-white/5 rounded-xl p-3 space-y-2 mb-3 text-xs">
+            <div className="flex items-center justify-between text-gray-400">
+              <span className="flex items-center gap-1.5 text-gray-500">
+                <span>📅</span> Registrada:
+              </span>
+              <span className="font-medium text-gray-300">
+                {new Date(bet.createdAt).toLocaleString("pt-BR")}
+                {bet.createdBy?.name && ` por ${bet.createdBy.name}`}
+              </span>
+            </div>
+
+            {bet.resolvedBy ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-2 border-t border-white/5 text-gray-300">
+                <span className="flex items-center gap-1.5 text-gray-400">
+                  <span className="text-yellow-400">⚖️</span> Resolvida por:
+                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-white flex items-center gap-1.5">
+                    {bet.resolvedBy.photoURL && (
+                      <img
+                        src={bet.resolvedBy.photoURL}
+                        alt=""
+                        className="w-4 h-4 rounded-full object-cover"
+                      />
+                    )}
+                    <span>{bet.resolvedBy.name}</span>
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 font-semibold">
+                    {bet.resolvedBy.role === "admin"
+                      ? "Comissário"
+                      : bet.resolvedBy.role === "moderator"
+                      ? "Moderador"
+                      : bet.resolvedBy.role || "Admin"}
+                  </span>
+                  {bet.resolvedBy.at && (
+                    <span className="text-gray-500 text-[10px]">
+                      em {new Date(bet.resolvedBy.at).toLocaleDateString("pt-BR")} às {new Date(bet.resolvedBy.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : bet.result !== "pending" ? (
+              <div className="flex items-center justify-between pt-2 border-t border-white/5 text-gray-500 text-[11px]">
+                <span className="flex items-center gap-1.5">
+                  <span>⚖️</span> Resolução:
+                </span>
+                <span className="italic">Registrada antes do rastreamento</span>
+              </div>
+            ) : null}
+          </div>
 
           {/* Actions */}
           {isAdmin ? (
