@@ -264,6 +264,21 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               </button>
             )}
 
+            {/* Quick Rules Link */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("rules")}
+              title="Regras Oficiais do Bolão"
+              className={`h-11 hidden md:flex items-center justify-center gap-1.5 px-3 rounded-xl border text-xs font-black transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
+                activeTab === "rules"
+                  ? "bg-yellow-400 text-gray-950 border-yellow-400 shadow-md shadow-yellow-400/20"
+                  : "bg-gray-900/90 hover:bg-gray-800 text-gray-300 hover:text-white border-gray-800"
+              }`}
+            >
+              <span>📜</span>
+              <span className="hidden xl:inline">Regras</span>
+            </button>
+
             {/* Auth Profile / Login Button */}
             {isAuthenticated ? (
               <div className="relative flex-shrink-0" ref={menuRef}>
@@ -302,7 +317,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                         {userProfile?.displayName || "Apostador"}
                       </p>
                       <p className="text-gray-400 text-[10px] truncate mt-0.5">{user?.email}</p>
-                      <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black ${roleInfo.badgeClass}`}>
+                      <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black border ${roleInfo.badgeClass}`}>
                         {roleInfo.badge}
                       </span>
                     </div>
@@ -318,6 +333,19 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                     >
                       <span>👤</span>
                       <span>Meu Perfil & Liga</span>
+                    </button>
+
+                    {/* Regras Oficiais */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setActiveTab("rules");
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 text-xs text-yellow-400 hover:bg-yellow-400/10 font-bold flex items-center gap-2 transition-colors border-b border-gray-800/80"
+                    >
+                      <span>📜</span>
+                      <span>Regras & Permissões</span>
                     </button>
 
                     {isAdmin && (

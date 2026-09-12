@@ -2,12 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
-import { ROLES_GUIDE } from "../../data/rolesGuide";
 
 const PRESET_ODDS = ["1.30", "1.40", "1.50", "1.75", "2.00"];
 const POWER_ICONS = ["⚡", "🛡️", "🔥", "💎", "🎲", "👑", "🚀", "🍀", "🎯", "💣"];
 
-export default function Settings({ onOpenUserManager }) {
+export default function Settings({ onOpenUserManager, onOpenTab }) {
   const {
     teams,
     exportJSON,
@@ -40,7 +39,6 @@ export default function Settings({ onOpenUserManager }) {
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isAddingPower, setIsAddingPower] = useState(false);
-  const [selectedRoleTab, setSelectedRoleTab] = useState("all");
   const fileInputRef = useRef(null);
 
   // Form for new power
@@ -178,11 +176,6 @@ export default function Settings({ onOpenUserManager }) {
     setIsAddingPower(false);
     showFeedback("success", "Novo poder criado com sucesso!");
   };
-
-  const displayedRoles =
-    selectedRoleTab === "all"
-      ? ROLES_GUIDE
-      : ROLES_GUIDE.filter((r) => r.id === selectedRoleTab);
 
   if (!isAdmin) {
     return (
@@ -526,52 +519,33 @@ export default function Settings({ onOpenUserManager }) {
             </div>
           </div>
 
-          {/* Card: Regras Oficiais */}
+          {/* Card: Atalho para Regras Oficiais da Liga */}
           <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl">
-            <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span>📜</span>
-              <span>Regras Oficiais do Bolão</span>
-            </h3>
-            <div className="space-y-2.5 text-xs text-gray-400">
-              <div className="p-2.5 rounded-2xl bg-gray-950/50 border border-gray-800/80 flex items-start gap-2.5">
-                <span className="text-base">🏈</span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center text-2xl shadow-sm">
+                  📜
+                </div>
                 <div>
-                  <strong className="text-white block font-bold">16 Times Selecionados</strong>
-                  <span>Cada participante compete gerenciando o pote de seus times escolhidos.</span>
+                  <h3 className="text-white font-black text-sm sm:text-base">
+                    Regras Oficiais & Diretrizes
+                  </h3>
+                  <p className="text-gray-400 text-xs mt-0.5">
+                    Regulamento completo, dinâmica dos potes e critérios de apostas
+                  </p>
                 </div>
               </div>
 
-              <div className="p-2.5 rounded-2xl bg-gray-950/50 border border-gray-800/80 flex items-start gap-2.5">
-                <span className="text-base">📈</span>
-                <div>
-                  <strong className="text-emerald-400 block font-bold">Green (Vitória)</strong>
-                  <span>O pote cresce com o lucro líquido da aposta: valor × (odd - 1).</span>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded-2xl bg-gray-950/50 border border-gray-800/80 flex items-start gap-2.5">
-                <span className="text-base">📉</span>
-                <div>
-                  <strong className="text-red-400 block font-bold">Red (Derrota)</strong>
-                  <span>O valor apostado é descontado do pote (a menos que tenha escudo protetor).</span>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded-2xl bg-gray-950/50 border border-gray-800/80 flex items-start gap-2.5">
-                <span className="text-base">📏</span>
-                <div>
-                  <strong className="text-yellow-400 block font-bold">Regra da Aposta Mínima</strong>
-                  <span>A aposta mínima de cada rodada é sempre o valor total do pote do time.</span>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded-2xl bg-gray-950/50 border border-gray-800/80 flex items-start gap-2.5">
-                <span className="text-base">🔒</span>
-                <div>
-                  <strong className="text-white block font-bold">1 Aposta por Confronto</strong>
-                  <span>Cada confronto da rodada aceita no máximo uma aposta única.</span>
-                </div>
-              </div>
+              {onOpenTab && (
+                <button
+                  type="button"
+                  onClick={() => onOpenTab("rules")}
+                  className="px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs transition-all shadow-md shadow-yellow-400/10 flex items-center gap-1.5 self-start sm:self-auto hover:scale-105 active:scale-95"
+                >
+                  <span>Ver Regras Oficiais</span>
+                  <span>➜</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -601,167 +575,18 @@ export default function Settings({ onOpenUserManager }) {
                 Gerencie quem pode apostar, promova outros participantes a <strong>Comissários</strong> ou <strong>revogue acessos</strong> instantaneamente.
               </p>
 
-              {onOpenUserManager && (
+              {onOpenTab && (
                 <button
                   type="button"
-                  onClick={onOpenUserManager}
-                  className="w-full py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs transition-all shadow-md shadow-yellow-400/10 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95"
+                  onClick={() => onOpenTab("rules")}
+                  className="w-full mt-2 py-2 px-4 rounded-xl bg-gray-800/90 hover:bg-gray-800 text-gray-300 hover:text-white font-bold text-xs border border-gray-700/80 transition-all flex items-center justify-center gap-1.5"
                 >
-                  <span>Gerenciar Usuários & Permissões</span>
+                  <span>🛡️ Consultar Matriz de Permissões</span>
                   <span>➜</span>
                 </button>
               )}
             </div>
           )}
-
-          {/* Card: Guia Explicativo de Papéis & Permissões */}
-          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-800/80">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-xl">
-                  🛡️
-                </div>
-                <div>
-                  <h3 className="text-white font-black text-sm sm:text-base flex items-center gap-2">
-                    <span>Níveis de Acesso & Permissões</span>
-                  </h3>
-                  <p className="text-gray-400 text-xs">
-                    Entenda o que cada papel pode visualizar, palpitar e administrar no bolão
-                  </p>
-                </div>
-              </div>
-
-              {onOpenUserManager && (
-                <button
-                  type="button"
-                  onClick={onOpenUserManager}
-                  className="text-xs font-bold text-yellow-400 hover:text-yellow-300 flex items-center gap-1 self-start sm:self-auto bg-yellow-400/10 hover:bg-yellow-400/20 px-3 py-1.5 rounded-xl border border-yellow-400/20 transition-all"
-                >
-                  <span>Atribuir Papéis</span>
-                  <span>➜</span>
-                </button>
-              )}
-            </div>
-
-            {/* Quick Filter Pill Buttons */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-              <button
-                type="button"
-                onClick={() => setSelectedRoleTab("all")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                  selectedRoleTab === "all"
-                    ? "bg-yellow-400 text-gray-950 shadow-md shadow-yellow-400/20 font-black"
-                    : "bg-gray-950 text-gray-400 hover:text-white border border-gray-800"
-                }`}
-              >
-                Todos ({ROLES_GUIDE.length})
-              </button>
-              {ROLES_GUIDE.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setSelectedRoleTab(r.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                    selectedRoleTab === r.id
-                      ? "bg-gray-800 text-white border border-gray-600 shadow-md"
-                      : "bg-gray-950 text-gray-400 hover:text-white border border-gray-800"
-                  }`}
-                >
-                  <span>{r.icon}</span>
-                  <span>{r.shortName}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Roles List */}
-            <div className="space-y-3 pt-1">
-              {displayedRoles.map((role) => (
-                <div
-                  key={role.id}
-                  className={`p-4 rounded-2xl border transition-all ${role.containerBg} ${role.borderColor}`}
-                >
-                  {/* Top Bar: Icon, Name, Badge, Description */}
-                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-white/5">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${role.iconBg}`}
-                      >
-                        {role.icon}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-white font-black text-sm">
-                            {role.name}
-                          </span>
-                          <span
-                            className={`text-[10px] font-black px-2 py-0.5 rounded-full ${role.badgeColor}`}
-                          >
-                            {role.badge}
-                          </span>
-                        </div>
-                        <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-                          {role.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Telas Acessíveis */}
-                  <div className="mt-3">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-1.5">
-                      🖥️ Telas & Módulos Acessíveis:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {role.screens.map((scr, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-300 font-medium"
-                        >
-                          {scr}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* O que pode fazer */}
-                  <div className="mt-3">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 block mb-1.5">
-                      ✅ O que pode fazer (Ações Permitidas):
-                    </span>
-                    <ul className="space-y-1.5 text-xs text-gray-300">
-                      {role.canDo.map((action, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-emerald-400 text-xs font-bold flex-shrink-0 mt-0.5">
-                            ✓
-                          </span>
-                          <span className="leading-snug">{action}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* O que NÃO pode fazer (Restrições) */}
-                  {role.cannotDo && role.cannotDo.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-white/5">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-red-400 block mb-1.5">
-                        ❌ O que NÃO pode fazer (Restrições):
-                      </span>
-                      <ul className="space-y-1.5 text-xs text-gray-400">
-                        {role.cannotDo.map((rest, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-red-400 text-xs font-bold flex-shrink-0 mt-0.5">
-                              ✕
-                            </span>
-                            <span className="leading-snug">{rest}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Card: Configuração de Poderes */}
           <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl">
