@@ -898,18 +898,24 @@ export default function TeamStats({
 
                 {/* Barra de Probabilidade de Vitória */}
                 <div className="space-y-1.5 pt-1">
-                  <div className="flex justify-between items-center text-xs font-black">
-                    <span style={{ color: teamA.color }} className="flex items-center gap-1.5">
-                      <span>{teamA.name}</span>
-                      <span className="text-white bg-gray-900 px-2 py-0.5 rounded-lg border border-gray-800">
+                  <div className="flex justify-between items-center text-xs font-black gap-2">
+                    <span style={{ color: teamA.color }} className="flex items-center gap-1.5 min-w-0">
+                      <span className="truncate max-w-[110px] sm:max-w-none">
+                        <span className="hidden sm:inline">{teamA.name}</span>
+                        <span className="sm:hidden">{teamA.shortDisplayName || teamA.abbr || teamA.name}</span>
+                      </span>
+                      <span className="text-white bg-gray-900 px-1.5 sm:px-2 py-0.5 rounded-lg border border-gray-800 flex-shrink-0">
                         {predictorData.probA}%
                       </span>
                     </span>
-                    <span style={{ color: teamB.color }} className="flex items-center gap-1.5">
-                      <span className="text-white bg-gray-900 px-2 py-0.5 rounded-lg border border-gray-800">
+                    <span style={{ color: teamB.color }} className="flex items-center gap-1.5 min-w-0 justify-end">
+                      <span className="text-white bg-gray-900 px-1.5 sm:px-2 py-0.5 rounded-lg border border-gray-800 flex-shrink-0">
                         {predictorData.probB}%
                       </span>
-                      <span>{teamB.name}</span>
+                      <span className="truncate max-w-[110px] sm:max-w-none text-right">
+                        <span className="hidden sm:inline">{teamB.name}</span>
+                        <span className="sm:hidden">{teamB.shortDisplayName || teamB.abbr || teamB.name}</span>
+                      </span>
                     </span>
                   </div>
 

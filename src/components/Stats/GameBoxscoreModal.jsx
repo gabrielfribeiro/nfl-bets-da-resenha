@@ -47,47 +47,47 @@ export default function GameBoxscoreModal({ isOpen, onClose, eventId, initialSum
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-gray-900 border border-gray-700 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Modal Header: Matchup & Score Centered */}
-        <div className="relative p-4 sm:p-5 border-b border-gray-800 bg-gradient-to-r from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center flex-shrink-0">
-          <div className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap sm:flex-nowrap px-8">
+        <div className="relative p-3.5 sm:p-5 border-b border-gray-800 bg-gradient-to-r from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center justify-center gap-2 sm:gap-6 flex-wrap sm:flex-nowrap px-6 sm:px-8">
             {/* Away Team */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <img
                 src={getLogoUrl(header?.awayTeam, 100)}
                 alt={header?.awayTeam?.name || "Visitante"}
-                className="w-10 h-10 object-contain drop-shadow"
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow flex-shrink-0"
                 onError={(e) => { e.target.style.display = "none"; }}
               />
               <div className="text-left">
-                <span className="text-white font-black text-xs sm:text-sm block line-clamp-1">
+                <span className="text-white font-black text-xs sm:text-sm block truncate max-w-[75px] sm:max-w-none">
                   {header?.awayTeam?.name || "Visitante"}
                 </span>
                 <span className="text-gray-400 text-[10px]">Visitante</span>
               </div>
-              <span className="text-xl sm:text-2xl font-black text-white ml-1 sm:ml-2">
+              <span className="text-lg sm:text-2xl font-black text-white ml-1 sm:ml-2">
                 {header?.awayTeam?.score}
               </span>
             </div>
 
-            <div className="text-center px-2 flex-shrink-0">
-              <span className="text-[10px] uppercase tracking-wider font-extrabold text-yellow-400 bg-yellow-400/10 px-2.5 py-0.5 rounded-full border border-yellow-400/20">
+            <div className="text-center px-1.5 sm:px-2 flex-shrink-0">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold text-yellow-400 bg-yellow-400/10 px-2 sm:px-2.5 py-0.5 rounded-full border border-yellow-400/20">
                 {header?.statusDetail || "Final"}
               </span>
               <span className="block text-[10px] text-gray-500 font-bold mt-0.5">VS</span>
             </div>
 
             {/* Home Team */}
-            <div className="flex items-center gap-2">
-              <span className="text-xl sm:text-2xl font-black text-white mr-1 sm:mr-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-lg sm:text-2xl font-black text-white mr-1 sm:mr-2">
                 {header?.homeTeam?.score}
               </span>
               <img
                 src={getLogoUrl(header?.homeTeam, 100)}
                 alt={header?.homeTeam?.name || "Mandante"}
-                className="w-10 h-10 object-contain drop-shadow"
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow flex-shrink-0"
                 onError={(e) => { e.target.style.display = "none"; }}
               />
               <div className="text-left">
-                <span className="text-white font-black text-xs sm:text-sm block line-clamp-1">
+                <span className="text-white font-black text-xs sm:text-sm block truncate max-w-[75px] sm:max-w-none">
                   {header?.homeTeam?.name || "Mandante"}
                 </span>
                 <span className="text-gray-400 text-[10px]">Mandante</span>
