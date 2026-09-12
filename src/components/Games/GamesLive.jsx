@@ -331,27 +331,28 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                   title="Clique para abrir as estatísticas e raio-x deste confronto"
                 >
                   {/* Away Team (3 cols) */}
-                  <div className="col-span-3 flex items-center gap-3">
+                  <div className="col-span-3 flex items-center gap-1.5 sm:gap-3">
                     <img
                       src={getLogoUrl(game.awayTeam)}
                       alt={game.awayTeam.name}
-                      className="w-12 h-12 object-contain drop-shadow"
+                      className="w-9 h-9 sm:w-12 sm:h-12 object-contain drop-shadow flex-shrink-0"
                       onError={(e) => {
                         e.target.src = game.awayTeam.logo;
                       }}
                     />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1">
-                        <span className="text-white font-black text-sm truncate block">
-                          {game.awayTeam.name}
+                        <span className="text-white font-black text-xs sm:text-sm truncate block">
+                          <span className="hidden sm:inline">{game.awayTeam.name}</span>
+                          <span className="sm:hidden">{game.awayTeam.shortDisplayName || game.awayTeam.abbreviation || game.awayTeam.name}</span>
                         </span>
                         {isAwayInLeague && (
-                          <span className="text-yellow-400 text-xs" title="Time do seu Bolão">
+                          <span className="text-yellow-400 text-xs flex-shrink-0" title="Time do seu Bolão">
                             ★
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-gray-500 font-semibold block">
+                      <span className="text-[10px] text-gray-500 font-semibold block truncate">
                         {game.awayTeam.record || "Visitante"}
                       </span>
                     </div>
@@ -361,7 +362,7 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                   <div className="col-span-1 text-center">
                     {game.isLive || game.isCompleted ? (
                       <div className="flex flex-col items-center">
-                        <div className="flex items-center justify-center gap-1.5 text-lg font-black text-white">
+                        <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-base sm:text-lg font-black text-white">
                           <span className={game.awayTeam.isWinner ? "text-yellow-400" : ""}>
                             {game.awayTeam.score}
                           </span>
@@ -377,33 +378,34 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                         )}
                       </div>
                     ) : (
-                      <span className="w-8 h-8 rounded-full bg-gray-800 text-gray-400 text-xs font-black flex items-center justify-center mx-auto border border-gray-700">
+                      <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-800 text-gray-400 text-[11px] sm:text-xs font-black flex items-center justify-center mx-auto border border-gray-700">
                         VS
                       </span>
                     )}
                   </div>
 
                   {/* Home Team (3 cols) */}
-                  <div className="col-span-3 flex items-center justify-end gap-3 text-right">
+                  <div className="col-span-3 flex items-center justify-end gap-1.5 sm:gap-3 text-right">
                     <div className="min-w-0">
                       <div className="flex items-center justify-end gap-1">
                         {isHomeInLeague && (
-                          <span className="text-yellow-400 text-xs" title="Time do seu Bolão">
+                          <span className="text-yellow-400 text-xs flex-shrink-0" title="Time do seu Bolão">
                             ★
                           </span>
                         )}
-                        <span className="text-white font-black text-sm truncate block">
-                          {game.homeTeam.name}
+                        <span className="text-white font-black text-xs sm:text-sm truncate block">
+                          <span className="hidden sm:inline">{game.homeTeam.name}</span>
+                          <span className="sm:hidden">{game.homeTeam.shortDisplayName || game.homeTeam.abbreviation || game.homeTeam.name}</span>
                         </span>
                       </div>
-                      <span className="text-[10px] text-gray-500 font-semibold block">
+                      <span className="text-[10px] text-gray-500 font-semibold block truncate">
                         {game.homeTeam.record || "Mandante"}
                       </span>
                     </div>
                     <img
                       src={getLogoUrl(game.homeTeam)}
                       alt={game.homeTeam.name}
-                      className="w-12 h-12 object-contain drop-shadow"
+                      className="w-9 h-9 sm:w-12 sm:h-12 object-contain drop-shadow flex-shrink-0"
                       onError={(e) => {
                         e.target.src = game.homeTeam.logo;
                       }}
@@ -499,7 +501,8 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                                     className="py-1.5 px-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-gray-950 font-black text-xs border border-emerald-500/40 transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
                                   >
                                     <span>✅</span>
-                                    <span>Green (+R$ {profit})</span>
+                                    <span>Green</span>
+                                    <span className="hidden sm:inline text-[11px] font-bold">(+R$ {profit})</span>
                                   </button>
                                   <button
                                     type="button"
@@ -507,7 +510,8 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                                     className="py-1.5 px-2 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black text-xs border border-red-500/40 transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
                                   >
                                     <span>❌</span>
-                                    <span>Red (-R$ {bet.amount.toFixed(2)})</span>
+                                    <span>Red</span>
+                                    <span className="hidden sm:inline text-[11px] font-bold">(-R$ {bet.amount.toFixed(2)})</span>
                                   </button>
                                 </div>
                               </div>

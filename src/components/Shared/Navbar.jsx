@@ -101,10 +101,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     { id: "stats",     label: "Stats",     icon: "📊" },
     { id: "new-bet",   label: "Nova Aposta", icon: "➕" },
     { id: "history",   label: "Histórico",  icon: "📋" },
-    { id: "achievements", label: "Conquistas", icon: "🏅" },
+    { id: "achievements", label: "Conquistas", icon: "🏅", hideOnMobile: true },
     ...(isAdmin
-      ? [{ id: "settings", label: "Config", icon: "⚙️" }]
-      : [{ id: "profile", label: "Perfil", icon: "👤" }]),
+      ? [{ id: "settings", label: "Config", icon: "⚙️", hideOnMobile: true }]
+      : [{ id: "profile", label: "Perfil", icon: "👤", hideOnMobile: true }]),
   ];
 
   const toggleSound = () => {
@@ -146,12 +146,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               onClick={() => syncWithNflWeek()}
               disabled={isSyncingNflWeek}
               title="Sincronizar rodada com a semana atual da NFL (ESPN)"
-              className="h-11 px-3.5 bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs sm:text-sm font-black rounded-xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+              className="h-11 px-2.5 sm:px-3.5 bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs sm:text-sm font-black rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all hover:scale-105 active:scale-95 flex-shrink-0"
             >
               <span className={isSyncingNflWeek ? "animate-spin inline-block text-sm" : "text-sm"}>
                 {isSyncingNflWeek ? "⏳" : "🏈"}
               </span>
-              <span>Semana #{currentRound}</span>
+              <span className="hidden sm:inline">Semana #{currentRound}</span>
+              <span className="sm:hidden">Sem. #{currentRound}</span>
             </button>
 
             {/* Cloud Status Badge */}
@@ -165,7 +166,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                     : "Conectado ao Firebase Firestore (Tempo Real)"
                   : "Modo Local (Offline)."
               }
-              className={`h-11 px-3 rounded-xl border text-xs font-black flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
+              className={`h-11 px-3 rounded-xl border text-xs font-black hidden sm:flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
                 isCloudEnabled
                   ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
                   : "bg-gray-900/80 hover:bg-gray-800 text-gray-400 hover:text-yellow-400 border-gray-800"
@@ -205,12 +206,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
             <div
               onClick={() => setActiveTab("dashboard")}
               title="Ver detalhes no Painel Principal"
-              className="h-11 px-4 cursor-pointer flex flex-col items-center justify-center text-center bg-gradient-to-br from-gray-900/90 to-gray-950/90 border border-yellow-400/30 hover:border-yellow-400/60 rounded-xl shadow-inner transition-all hover:scale-105"
+              className="h-11 px-2.5 sm:px-4 cursor-pointer flex flex-col items-center justify-center text-center bg-gradient-to-br from-gray-900/90 to-gray-950/90 border border-yellow-400/30 hover:border-yellow-400/60 rounded-xl shadow-inner transition-all hover:scale-105"
             >
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-extrabold leading-none block">
-                Pote Geral
+              <span className="text-[9px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-extrabold leading-none block">
+                <span className="hidden sm:inline">Pote Geral</span>
+                <span className="sm:hidden">Pote</span>
               </span>
-              <span className="text-yellow-400 font-black text-sm sm:text-base leading-none mt-1 block">
+              <span className="text-yellow-400 font-black text-xs sm:text-base leading-none mt-0.5 sm:mt-1 block">
                 R$ {totalPot.toFixed(2)}
               </span>
             </div>
@@ -222,7 +224,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
             <button
               onClick={toggleSound}
               title={isMuted ? "Ativar efeitos sonoros" : "Desativar efeitos sonoros"}
-              className="w-11 h-11 rounded-xl bg-gray-900/90 border border-gray-800 hover:border-gray-700 flex items-center justify-center text-lg text-gray-400 hover:text-white transition-colors flex-shrink-0"
+              className="w-11 h-11 rounded-xl bg-gray-900/90 border border-gray-800 hover:border-gray-700 hidden sm:flex items-center justify-center text-lg text-gray-400 hover:text-white transition-colors flex-shrink-0"
             >
               {isMuted ? "🔇" : "🔊"}
             </button>
@@ -328,6 +330,21 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                     >
                       <span>👤</span>
                       <span>Meu Perfil & Liga</span>
+                    </button>
+
+                    {/* Efeitos Sonoros (Fácil acesso mobile) */}
+                    <button
+                      type="button"
+                      onClick={toggleSound}
+                      className="w-full text-left px-3.5 py-2.5 text-xs text-amber-300 hover:bg-amber-400/10 font-bold flex items-center justify-between transition-colors border-b border-gray-800/80"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{isMuted ? "🔇" : "🔊"}</span>
+                        <span>Efeitos Sonoros</span>
+                      </div>
+                      <span className="text-[10px] text-gray-400 font-normal">
+                        {isMuted ? "Mudo" : "Ativo"}
+                      </span>
                     </button>
 
                     {/* Estatísticas & Confrontos */}
@@ -456,11 +473,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 relative flex flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors
-                ${activeTab === tab.id
+              className={`flex-1 relative flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors ${
+                tab.hideOnMobile ? "hidden sm:flex" : "flex"
+              } ${
+                activeTab === tab.id
                   ? "text-yellow-400"
                   : "text-gray-600 hover:text-gray-400"
-                }`}
+              }`}
             >
               {tab.id === "games" && pendingFinishedCount > 0 && (
                 <span className="absolute top-2 right-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />

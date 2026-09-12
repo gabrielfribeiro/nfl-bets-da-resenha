@@ -77,13 +77,14 @@ export default function Dashboard({ onOpenTab }) {
       </div>
       {/* Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
-        <StatCard label="Rodada" value={`#${currentRound}`} icon="📅" />
         <StatCard
           label="Pote total"
           value={`R$ ${totalPot.toFixed(2)}`}
           icon="💰"
           highlight
+          className="col-span-2 sm:col-span-1"
         />
+        <StatCard label="Rodada" value={`#${currentRound}`} icon="📅" />
         <StatCard
           label="Salva-Vidas (Injetado)"
           value={`R$ ${totalAddedFunds.toFixed(2)}`}
@@ -243,7 +244,7 @@ export default function Dashboard({ onOpenTab }) {
   );
 }
 
-function StatCard({ label, value, icon, highlight, danger }) {
+function StatCard({ label, value, icon, highlight, danger, className = "" }) {
   return (
     <div
       className={`rounded-xl p-4 ${
@@ -252,7 +253,7 @@ function StatCard({ label, value, icon, highlight, danger }) {
           : danger
           ? "bg-rose-950/25 border border-rose-500/40"
           : "bg-gray-900 border border-gray-800"
-      }`}
+      } ${className}`}
     >
       <div className="flex items-center gap-2 mb-1">
         <span className="text-base">{icon}</span>
