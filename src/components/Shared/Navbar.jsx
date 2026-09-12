@@ -96,11 +96,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
   }, [showUserMenu]);
 
   const navTabs = [
-    { id: "dashboard", label: "Início", icon: "🏠" },
-    { id: "games",     label: "Jogos", icon: "🏈" },
-    { id: "new-bet",   label: "Apostar", icon: "➕", isCenter: true },
+    { id: "dashboard", label: "Dashboard", icon: "🏠" },
+    { id: "games",     label: "Jogos NFL", icon: "🏈" },
     { id: "stats",     label: "Stats",     icon: "📊" },
-    { id: "history",   label: "Extrato",  icon: "📋" },
+    { id: "new-bet",   label: "Nova Aposta", icon: "➕" },
+    { id: "history",   label: "Histórico",  icon: "📋" },
+    { id: "achievements", label: "Conquistas", icon: "🏅" },
+    ...(isAdmin
+      ? [{ id: "settings", label: "Config", icon: "⚙️" }]
+      : [{ id: "profile", label: "Perfil", icon: "👤" }]),
   ];
 
   const toggleSound = () => {
@@ -463,58 +467,25 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
       </header>
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-md border-t border-gray-800/90 z-40 h-16">
-        <div className="max-w-md mx-auto flex h-full items-center justify-around px-2">
-          {navTabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-
-            if (tab.isCenter) {
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="relative -top-3 flex flex-col items-center justify-center group focus:outline-none flex-shrink-0"
-                >
-                  <div
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-lg transition-all duration-200 ${
-                      isActive
-                        ? "bg-gradient-to-tr from-yellow-400 to-amber-500 text-gray-950 shadow-yellow-400/40 scale-105"
-                        : "bg-gradient-to-tr from-yellow-400/90 to-amber-500/90 text-gray-950 shadow-yellow-400/25 hover:scale-105 active:scale-95"
-                    }`}
-                  >
-                    <span>➕</span>
-                  </div>
-                  <span
-                    className={`text-[10px] font-black mt-0.5 ${
-                      isActive ? "text-yellow-400" : "text-gray-400"
-                    }`}
-                  >
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            }
-
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 relative flex flex-col items-center justify-center h-full py-1 gap-0.5 transition-colors ${
-                  isActive
-                    ? "text-yellow-400 font-black"
-                    : "text-gray-500 hover:text-gray-300 font-semibold"
+      <nav className="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-40 h-16">
+        <div className="max-w-2xl mx-auto flex h-full items-center">
+          {navTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 relative flex flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors
+                ${activeTab === tab.id
+                  ? "text-yellow-400"
+                  : "text-gray-600 hover:text-gray-400"
                 }`}
-              >
-                {tab.id === "games" && pendingFinishedCount > 0 && (
-                  <span className="absolute top-2 right-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
-                )}
-                <span className="text-lg leading-none">{tab.icon}</span>
-                <span className="text-[10px] leading-none truncate max-w-[56px]">
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
+            >
+              {tab.id === "games" && pendingFinishedCount > 0 && (
+                <span className="absolute top-2 right-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+              )}
+              <span className="text-base sm:text-lg leading-none">{tab.icon}</span>
+              <span className="text-[10px] sm:text-[11px] font-semibold leading-none truncate max-w-[52px] sm:max-w-none">{tab.label}</span>
+            </button>
+          ))}
         </div>
       </nav>
     </>
