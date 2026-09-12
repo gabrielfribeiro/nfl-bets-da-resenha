@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth, ADMIN_EMAILS } from "../../context/AuthContext";
 import { sounds } from "../../utils/sound";
+import MusicPlayer from "./MusicPlayer";
 
 export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
   const {
@@ -214,29 +215,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               </span>
             </div>
 
-            {/* Quick Share Card button */}
-            {onOpenShareModal && (
-              <button
-                type="button"
-                onClick={onOpenShareModal}
-                title="Compartilhar Card de Resenha da Rodada"
-                className="h-11 hidden sm:flex items-center justify-center gap-2 px-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-gray-950 font-black text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-500/10 transition-all hover:scale-105"
-              >
-                <span className="text-base">📸</span>
-                <span className="hidden md:inline">Resenha</span>
-              </button>
-            )}
-
-            {/* Quick New Bet button (Desktop) */}
-            <button
-              type="button"
-              onClick={() => setActiveTab("new-bet")}
-              title="Registrar Nova Aposta"
-              className="h-11 hidden lg:flex items-center justify-center gap-2 px-4 bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs sm:text-sm rounded-xl shadow transition-all hover:scale-105"
-            >
-              <span className="text-base">➕</span>
-              <span>Apostar</span>
-            </button>
+            {/* Music Player: Pagode da Resenha */}
+            <MusicPlayer />
 
             {/* Sound Toggle Button */}
             <button

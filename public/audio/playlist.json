@@ -1,0 +1,30 @@
+[
+  {
+    "id": "track-0-estrada-do-bolao-mp3",
+    "filename": "estrada-do-bolao.mp3",
+    "title": "Estrada Do Bolao",
+    "emoji": "🤠",
+    "src": "/audio/estrada-do-bolao.mp3"
+  },
+  {
+    "id": "track-1-pagode-da-resenha-mp3",
+    "filename": "pagode-da-resenha.mp3",
+    "title": "Pagode Da Resenha",
+    "emoji": "🪕",
+    "src": "/audio/pagode-da-resenha.mp3"
+  },
+  {
+    "id": "track-2-piseiro-do-bolao-mp3",
+    "filename": "piseiro-do-bolao.mp3",
+    "title": "Piseiro Do Bolao",
+    "emoji": "🎹",
+    "src": "/audio/piseiro-do-bolao.mp3"
+  },
+  {
+    "id": "track-3-rock-da-resenha-mp3",
+    "filename": "rock-da-resenha.mp3",
+    "title": "Rock Da Resenha",
+    "emoji": "🎸",
+    "src": "/audio/rock-da-resenha.mp3"
+  }
+]
