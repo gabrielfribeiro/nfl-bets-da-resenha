@@ -1,10 +1,16 @@
-import { createContext, useContext, useCallback, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useCallback, useState, useEffect, useMemo, useRef } from "react";
 import confetti from "canvas-confetti";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { getTeamById } from "../data/nflTeams";
 import { sounds } from "../utils/sound";
 import { getTier } from "../utils/tiers";
 import { fetchCurrentNflWeek, fetchLiveGamesCount } from "../services/espnApi";
+import {
+  isFirebaseConfigured,
+  subscribeToLeague,
+  saveLeagueData,
+  DEFAULT_LEAGUE_ID,
+} from "../services/firebase";
 
 const BetContext = createContext(null);
 
@@ -65,6 +71,69 @@ function triggerCelebration() {
 
 export function BetProvider({ children }) {
   const [state, setState] = useLocalStorage(STORAGE_KEY, initialState);
+
+  // ── FIREBASE CLOUD SYNC ───────────────────────────────────────────
+  const [isCloudEnabled] = useState(() => isFirebaseConfigured());
+  const [cloudSyncStatus, setCloudSyncStatus] = useState(
+    isFirebaseConfigured() ? "syncing" : "offline"
+  );
+  const [cloudError, setCloudError] = useState(null);
+  const isRemoteUpdateRef = useRef(false);
+
+  // 1. Ouvir atualizações da nuvem em tempo real (onSnapshot)
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+
+    setCloudSyncStatus("syncing");
+    const unsubscribe = subscribeToLeague(
+      DEFAULT_LEAGUE_ID,
+      (cloudData) => {
+        if (cloudData && typeof cloudData === "object") {
+          isRemoteUpdateRef.current = true;
+          setState((prev) => ({
+            ...prev,
+            ...cloudData,
+          }));
+          setCloudSyncStatus("connected");
+          setCloudError(null);
+        } else {
+          // Documento ainda não existe no Firestore
+          setCloudSyncStatus("connected");
+        }
+      },
+      (err) => {
+        console.warn("[Firebase] Erro ao sincronizar:", err);
+        setCloudSyncStatus("error");
+        setCloudError(err.message || "Erro ao conectar com Firebase");
+      }
+    );
+
+    return () => unsubscribe();
+  }, [setState]);
+
+  // 2. Salvar na nuvem quando o estado local sofrer alterações
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+
+    if (isRemoteUpdateRef.current) {
+      isRemoteUpdateRef.current = false;
+      return;
+    }
+
+    if (state.setupComplete || state.selectedTeamIds.length > 0) {
+      setCloudSyncStatus("saving");
+      const timer = setTimeout(() => {
+        saveLeagueData(DEFAULT_LEAGUE_ID, state)
+          .then(() => setCloudSyncStatus("connected"))
+          .catch((err) => {
+            console.error("[Firebase] Erro ao salvar estado:", err);
+            setCloudSyncStatus("error");
+          });
+      }, 350);
+
+      return () => clearTimeout(timer);
+    }
+  }, [state]);
 
   // Fallback for maxOdd and powerUps if old local storage exists without them
   const effectiveMaxOdd = state.maxOdd ?? DEFAULT_MAX_ODD;
@@ -208,6 +277,9 @@ export function BetProvider({ children }) {
       console.error("Erro ao limpar localStorage:", e);
     }
     setState(initialState);
+    if (isFirebaseConfigured()) {
+      saveLeagueData(DEFAULT_LEAGUE_ID, initialState).catch(console.error);
+    }
   }, [setState]);
 
   // ── BETS ───────────────────────────────────────────────────────────
@@ -612,6 +684,10 @@ export function BetProvider({ children }) {
         getMinBet,
         isTeamSelected,
         getTeamBets,
+        isCloudEnabled,
+        cloudSyncStatus,
+        cloudError,
+        leagueId: DEFAULT_LEAGUE_ID,
       }}
     >
       {children}

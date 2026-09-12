@@ -26,6 +26,10 @@ export default function Settings() {
     removePowerUp,
     updatePowerUp,
     setPowerUpQuantity,
+    isCloudEnabled,
+    cloudSyncStatus,
+    cloudError,
+    leagueId,
   } = useBet();
 
   const [oddInput, setOddInput] = useState(maxOdd ? maxOdd.toString() : "1.5");
@@ -870,6 +874,65 @@ export default function Settings() {
                   <span>Carregar Arquivo JSON</span>
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Card: Banco de Dados & Nuvem (Firebase) */}
+          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+            <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest mb-3 flex items-center gap-2">
+              <span>☁️</span>
+              <span>Banco de Dados & Nuvem (Firebase)</span>
+            </h3>
+
+            <div className="p-4 rounded-2xl bg-gray-950/70 border border-gray-800 space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔥</span>
+                  <span className="text-white font-bold text-sm">Status da Conexão</span>
+                </div>
+                {isCloudEnabled ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    {cloudSyncStatus === "saving"
+                      ? "Salvando..."
+                      : cloudSyncStatus === "syncing"
+                      ? "Sincronizando..."
+                      : cloudSyncStatus === "error"
+                      ? "Erro na Nuvem"
+                      : "Nuvem Conectada"}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                    <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                    Modo Local (Offline)
+                  </span>
+                )}
+              </div>
+
+              {isCloudEnabled ? (
+                <div className="space-y-2 text-xs text-gray-300 leading-relaxed">
+                  <p>
+                    O aplicativo está conectado ao <strong className="text-white font-bold">Firebase Firestore</strong> na liga <code className="px-2 py-0.5 rounded bg-gray-800 text-yellow-400 font-mono font-bold">{leagueId}</code>.
+                  </p>
+                  <p className="text-gray-400">
+                    Qualquer aposta, green/red ou mudança de rodada feita por você ou seus amigos é atualizada instantaneamente em todos os celulares e computadores!
+                  </p>
+                  {cloudError && (
+                    <p className="text-red-400 font-semibold mt-1">
+                      ⚠️ {cloudError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2 text-xs text-gray-400 leading-relaxed">
+                  <p>
+                    Seus dados estão sendo salvos apenas no armazenamento local deste navegador (<strong className="text-gray-200">localStorage</strong>).
+                  </p>
+                  <p>
+                    Para que você e seus amigos acessem o <strong className="text-yellow-400">mesmo bolão compartilhado em tempo real</strong> pelo link da Vercel, basta adicionar as credenciais do seu projeto Firebase nas variáveis de ambiente da Vercel (<code className="text-gray-300 font-mono">VITE_FIREBASE_API_KEY</code>, etc.) ou no arquivo <code className="text-gray-300 font-mono">.env.local</code> localmente.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
