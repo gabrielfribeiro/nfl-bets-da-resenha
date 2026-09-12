@@ -15,6 +15,7 @@ import BroadcastTicker from "./components/Shared/BroadcastTicker";
 import LoginModal from "./components/Auth/LoginModal";
 
 import GamesLive from "./components/Games/GamesLive";
+import TeamStats from "./components/Stats/TeamStats";
 import ShareModal from "./components/Dashboard/ShareModal";
 
 function AppContent() {
@@ -22,11 +23,17 @@ function AppContent() {
   const { isAuthenticated, loading, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [preselectedMatchup, setPreselectedMatchup] = useState(null);
+  const [preselectedStatsMatchup, setPreselectedStatsMatchup] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
 
   const handleQuickBet = (teamA, teamB, round) => {
     setPreselectedMatchup({ teamA, teamB, round });
     setActiveTab("new-bet");
+  };
+
+  const handleCompareStats = (teamA, teamB) => {
+    setPreselectedStatsMatchup({ teamA, teamB });
+    setActiveTab("stats");
   };
 
   // 1. Enquanto carrega a sessão de autenticação do Firebase
@@ -67,7 +74,20 @@ function AppContent() {
       />
       <main>
         {activeTab === "dashboard" && <Dashboard onOpenTab={setActiveTab} />}
-        {activeTab === "games" && <GamesLive onQuickBet={handleQuickBet} />}
+        {activeTab === "games" && (
+          <GamesLive
+            onQuickBet={handleQuickBet}
+            onOpenStats={handleCompareStats}
+          />
+        )}
+        {activeTab === "stats" && (
+          <TeamStats
+            initialTeamA={preselectedStatsMatchup?.teamA}
+            initialTeamB={preselectedStatsMatchup?.teamB}
+            onGoToNewBet={handleQuickBet}
+            onOpenTab={setActiveTab}
+          />
+        )}
         {activeTab === "new-bet" && (
           <NewBet
             initialMatchup={preselectedMatchup}

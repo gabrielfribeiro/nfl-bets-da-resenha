@@ -4,7 +4,7 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { getTeamById } from "../data/nflTeams";
 import { sounds } from "../utils/sound";
 import { getTier } from "../utils/tiers";
-import { fetchCurrentNflWeek, fetchLiveGamesCount } from "../services/espnApi";
+import { fetchCurrentNflWeek, fetchLiveGamesCount, fetchNflScoreboard } from "../services/espnApi";
 import {
   isFirebaseConfigured,
   subscribeToLeague,
@@ -616,24 +616,97 @@ export function BetProvider({ children }) {
     syncWithNflWeek();
   }, [syncWithNflWeek]);
 
-  // ── LIVE GAMES STATUS & TOTAL POT ────────────────────────────────────
+  // ── SCOREBOARD, LIVE GAMES STATUS & FINISHED PENDING BETS ─────────────
+  const [scoreboardGames, setScoreboardGames] = useState([]);
   const [liveGamesCount, setLiveGamesCount] = useState(0);
 
-  const checkLiveGames = useCallback(async () => {
-    try {
-      const count = await fetchLiveGamesCount();
-      setLiveGamesCount(count);
-      return count;
-    } catch {
-      return 0;
-    }
+  const registerGames = useCallback((newGames) => {
+    if (!Array.isArray(newGames) || newGames.length === 0) return;
+    setScoreboardGames((prev) => {
+      const merged = new Map(prev.map((g) => [g.id, g]));
+      newGames.forEach((g) => {
+        if (g && g.id) merged.set(g.id, g);
+      });
+      return Array.from(merged.values());
+    });
   }, []);
 
+  const refreshScoreboard = useCallback(async () => {
+    try {
+      // Sincroniza rodada atual e as rodadas de quaisquer apostas pendentes
+      const pendingRounds = Array.from(
+        new Set(
+          state.bets
+            .filter((b) => b.result === "pending")
+            .map((b) => Number(b.round) || state.currentRound)
+        )
+      );
+      if (pendingRounds.length === 0) {
+        pendingRounds.push(state.currentRound);
+      }
+
+      const results = await Promise.all(
+        pendingRounds.map((r) =>
+          fetchNflScoreboard(r).catch(() => ({ success: false, games: [] }))
+        )
+      );
+
+      const gamesMap = new Map();
+      results.forEach((res) => {
+        if (res?.success && Array.isArray(res.games)) {
+          res.games.forEach((g) => {
+            if (g && g.id) {
+              gamesMap.set(g.id, g);
+            }
+          });
+        }
+      });
+
+      const allGames = Array.from(gamesMap.values());
+      if (allGames.length > 0) {
+        setScoreboardGames((prev) => {
+          const merged = new Map(prev.map((g) => [g.id, g]));
+          allGames.forEach((g) => merged.set(g.id, g));
+          return Array.from(merged.values());
+        });
+        setLiveGamesCount(allGames.filter((g) => g.isLive).length);
+      }
+      return allGames;
+    } catch (err) {
+      console.warn("Falha ao sincronizar placares da ESPN no BetContext:", err);
+      return [];
+    }
+  }, [state.bets, state.currentRound]);
+
   useEffect(() => {
-    checkLiveGames();
-    const interval = setInterval(checkLiveGames, 45000);
+    refreshScoreboard();
+    const interval = setInterval(refreshScoreboard, 45000);
     return () => clearInterval(interval);
-  }, [checkLiveGames]);
+  }, [refreshScoreboard]);
+
+  // Regra: Uma aposta só entra no aviso superior se o jogo já acabou e o palpite ainda não foi resolvido
+  const pendingFinishedBets = useMemo(() => {
+    if (!scoreboardGames || scoreboardGames.length === 0) return [];
+    return state.bets.filter((b) => {
+      if (b.result !== "pending") return false;
+      const roundNum = Number(b.round);
+
+      const game = scoreboardGames.find((g) => {
+        const matchRound = !roundNum || !g.week || Number(g.week) === roundNum;
+        const matchTeams =
+          (g.awayTeam?.id === b.teamAId && g.homeTeam?.id === b.teamBId) ||
+          (g.awayTeam?.id === b.teamBId && g.homeTeam?.id === b.teamAId);
+        return matchTeams && matchRound;
+      });
+
+      if (!game) return false;
+      return Boolean(
+        game.isCompleted ||
+        game.status === "post" ||
+        game.statusDetail?.toLowerCase().includes("final")
+      );
+    });
+  }, [state.bets, scoreboardGames]);
 
   const totalPot = useMemo(() => {
     return state.selectedTeamIds.reduce(
@@ -773,7 +846,12 @@ export function BetProvider({ children }) {
         totalPot,
         liveGamesCount,
         setLiveGamesCount,
-        checkLiveGames,
+        checkLiveGames: refreshScoreboard,
+        scoreboardGames,
+        registerGames,
+        refreshScoreboard,
+        pendingFinishedBets,
+        pendingFinishedCount: pendingFinishedBets.length,
         exportJSON,
         importJSON,
         getMinBet,

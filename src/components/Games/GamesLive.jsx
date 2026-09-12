@@ -4,8 +4,8 @@ import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { getLogoUrl } from "../../data/nflTeams";
 
-export default function GamesLive({ onQuickBet }) {
-  const { selectedTeamIds, bets, updateBetResult, powerUpsList, currentRound } = useBet();
+export default function GamesLive({ onQuickBet, onOpenStats }) {
+  const { selectedTeamIds, bets, updateBetResult, powerUpsList, currentRound, registerGames } = useBet();
   const { isAdmin, canManageBets, isAuthenticated, setShowLoginModal } = useAuth();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +27,7 @@ export default function GamesLive({ onQuickBet }) {
       const res = await fetchNflScoreboard(weekNum);
       if (res.success) {
         setGames(res.games);
+        registerGames?.(res.games);
         if (res.currentWeek && !weekNum) {
           setSelectedWeek(res.currentWeek);
         }
@@ -401,11 +402,17 @@ export default function GamesLive({ onQuickBet }) {
                 {/* Bets created for this game */}
                 {gameBets.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-800/80 space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className="text-[10px] font-black uppercase tracking-wider text-yellow-400 flex items-center gap-1.5">
                         <span>🎯</span>
                         <span>Sua Aposta neste Jogo ({gameBets.length})</span>
                       </span>
+                      {game.isCompleted && gameBets.some((b) => b.result === "pending") && (
+                        <span className="text-[10px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                          <span>⚠️</span>
+                          <span>Jogo Finalizado · Aguardando Resolução</span>
+                        </span>
+                      )}
                     </div>
 
                     {gameBets.map((bet) => {
@@ -556,22 +563,39 @@ export default function GamesLive({ onQuickBet }) {
                     )}
                   </div>
 
-                  {onQuickBet && gameBets.length === 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!isAuthenticated) {
-                          setShowLoginModal(true);
-                          return;
-                        }
-                        onQuickBet(game.awayTeam.id, game.homeTeam.id, selectedWeek);
-                      }}
-                      className="flex-shrink-0 px-3 py-1.5 rounded-xl font-black text-xs border transition-all flex items-center gap-1.5 shadow-sm bg-yellow-400/10 hover:bg-yellow-400 text-yellow-400 hover:text-gray-950 border-yellow-400/30 active:scale-95"
-                    >
-                      <span>⚡</span>
-                      <span>Apostar</span>
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {onOpenStats && game.awayTeam?.id && game.homeTeam?.id && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenStats(game.awayTeam.id, game.homeTeam.id)}
+                        title="Comparar estatísticas deste confronto"
+                        className="px-2.5 py-1.5 rounded-xl font-black text-xs border transition-all flex items-center gap-1 bg-sky-500/10 hover:bg-sky-500 text-sky-400 hover:text-gray-950 border-sky-500/30 active:scale-95 shadow-sm"
+                      >
+                        <span>📊</span>
+                        <span className="hidden sm:inline">Stats</span>
+                      </button>
+                    )}
+
+                    {onQuickBet &&
+                      gameBets.length === 0 &&
+                      (selectedTeamIds?.includes(game.awayTeam?.id) ||
+                        selectedTeamIds?.includes(game.homeTeam?.id)) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            setShowLoginModal(true);
+                            return;
+                          }
+                          onQuickBet(game.awayTeam.id, game.homeTeam.id, selectedWeek);
+                        }}
+                        className="px-3 py-1.5 rounded-xl font-black text-xs border transition-all flex items-center gap-1.5 shadow-sm bg-yellow-400/10 hover:bg-yellow-400 text-yellow-400 hover:text-gray-950 border-yellow-400/30 active:scale-95"
+                      >
+                        <span>⚡</span>
+                        <span>Apostar</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

@@ -55,6 +55,7 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
 
   // Teams that can be bet on: must be selected AND in the matchup
   const teamsInMatchup = [teamAId, teamBId].filter((id) => selectedTeamIds.includes(id));
+  const hasAtLeastOneLeagueTeam = teamsInMatchup.length > 0;
 
   // Validation
   const amountVal = parseFloat(amount);
@@ -76,6 +77,7 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
     teamAId &&
     teamBId &&
     teamAId !== teamBId &&
+    hasAtLeastOneLeagueTeam &&
     isBettingTeamValid &&
     isAmountValid &&
     isOddValid &&
@@ -590,12 +592,22 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
             </div>
           </div>
 
+          {/* No League Team Alert */}
+          {teamAId && teamBId && !hasAtLeastOneLeagueTeam && (
+            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2.5">
+              <span className="text-base">🚫</span>
+              <span>
+                Este confronto não possui nenhuma equipe participante do Bolão. Apostas não são permitidas.
+              </span>
+            </div>
+          )}
+
           {/* Existing Bet Alert */}
           {existingBet && (
             <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2.5">
               <span className="text-base">⚠️</span>
               <span>
-                Já existe uma aposta registrada para este confronto na <strong>Semana {roundNum}</strong>. Cada partida só permite 1 única aposta por rodada.
+                Já existe uma aposta registrada para este confronto na <strong>Semana {roundNum}</strong>. Cada confronto só permite 1 única aposta por rodada.
               </span>
             </div>
           )}

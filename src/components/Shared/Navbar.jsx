@@ -11,14 +11,14 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     isSyncingNflWeek,
     totalPot,
     liveGamesCount,
+    pendingFinishedBets,
+    pendingFinishedCount = 0,
     isCloudEnabled,
     cloudSyncStatus,
   } = useBet();
   const { user, userProfile, isAdmin, isModerator, role, isAuthenticated, logout, setShowLoginModal } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMuted, setIsMuted] = useState(sounds.muted);
-  const pendingBets = bets.filter((b) => b.result === "pending");
-  const pendingCount = pendingBets.length;
   const menuRef = useRef(null);
 
   const isMaster = Boolean(
@@ -94,10 +94,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     };
   }, [showUserMenu]);
 
-  // Tabs dinâmicas: apenas Admin vê Config; demais usuários vêem Perfil
   const navTabs = [
     { id: "dashboard", label: "Dashboard", icon: "🏠" },
     { id: "games",     label: "Jogos NFL", icon: "🏈" },
+    { id: "stats",     label: "Stats",     icon: "📊" },
     { id: "new-bet",   label: "Nova Aposta", icon: "➕" },
     { id: "history",   label: "Histórico",  icon: "📋" },
     { id: "achievements", label: "Conquistas", icon: "🏅" },
@@ -264,6 +264,21 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               </button>
             )}
 
+            {/* Quick Stats Link */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("stats")}
+              title="Estatísticas e Raio-X dos Times"
+              className={`h-11 hidden md:flex items-center justify-center gap-1.5 px-3 rounded-xl border text-xs font-black transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
+                activeTab === "stats"
+                  ? "bg-yellow-400 text-gray-950 border-yellow-400 shadow-md shadow-yellow-400/20"
+                  : "bg-gray-900/90 hover:bg-gray-800 text-gray-300 hover:text-white border-gray-800"
+              }`}
+            >
+              <span>📊</span>
+              <span className="hidden xl:inline">Stats</span>
+            </button>
+
             {/* Quick Rules Link */}
             <button
               type="button"
@@ -335,6 +350,19 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                       <span>Meu Perfil & Liga</span>
                     </button>
 
+                    {/* Estatísticas & Confrontos */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setActiveTab("stats");
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 text-xs text-sky-400 hover:bg-sky-400/10 font-bold flex items-center gap-2 transition-colors border-b border-gray-800/80"
+                    >
+                      <span>📊</span>
+                      <span>Stats & Confrontos</span>
+                    </button>
+
                     {/* Regras Oficiais */}
                     <button
                       type="button"
@@ -403,23 +431,26 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
           </div>
         </div>
 
-        {/* AVISO DE APOSTAS PENDENTES NO HEADER */}
-        {pendingCount > 0 && (
+        {/* AVISO DE APOSTAS PENDENTES DE JOGOS JÁ ENCERRADOS */}
+        {pendingFinishedCount > 0 && (
           <div className="bg-gradient-to-r from-amber-950/90 via-yellow-950/70 to-amber-950/90 border-t border-b border-yellow-500/40 px-4 sm:px-8 py-2.5 shadow-lg">
             <div className="w-full flex items-center justify-between gap-4">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="text-lg flex-shrink-0 animate-bounce">⚠️</span>
                 <div className="min-w-0">
                   <p className="text-xs font-black text-yellow-300 uppercase tracking-wide flex items-center gap-1.5 truncate">
-                    <span>Apostas Pendentes</span>
+                    <span>Jogos Encerrados</span>
                     <span className="bg-yellow-400 text-gray-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">
-                      {pendingCount}
+                      {pendingFinishedCount}
+                    </span>
+                    <span className="text-[10px] text-yellow-400/80 font-semibold lowercase">
+                      (aguardando resultado)
                     </span>
                   </p>
-                  <p className="text-[11px] text-yellow-200/80 truncate">
-                    {pendingCount === 1
-                      ? "Há 1 aposta aguardando resolução de Green/Red para atualizar os potes."
-                      : `Há ${pendingCount} apostas aguardando resolução de Green/Red para atualizar os potes.`}
+                  <p className="text-[11px] text-yellow-200/90 truncate">
+                    {pendingFinishedCount === 1
+                      ? "1 aposta possui jogo já encerrado aguardando resolução de Green/Red para atualizar os potes."
+                      : `${pendingFinishedCount} apostas possuem jogos já encerrados aguardando resolução de Green/Red para atualizar os potes.`}
                   </p>
                 </div>
               </div>
@@ -427,9 +458,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                 <button
                   type="button"
                   onClick={() => setActiveTab("games")}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs px-3 py-1 rounded-xl shadow transition-all hover:scale-105"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
                 >
-                  Resolver nos Jogos ➜
+                  <span>Resolver nos Jogos</span>
+                  <span>➜</span>
                 </button>
               </div>
             </div>
@@ -439,22 +471,22 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
 
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-40 h-16">
-        <div className="max-w-lg mx-auto flex h-full items-center">
+        <div className="max-w-2xl mx-auto flex h-full items-center">
           {navTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 relative flex flex-col items-center justify-center h-full py-1 gap-1 transition-colors
+              className={`flex-1 relative flex flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors
                 ${activeTab === tab.id
                   ? "text-yellow-400"
                   : "text-gray-600 hover:text-gray-400"
                 }`}
             >
-              {tab.id === "games" && pendingCount > 0 && (
+              {tab.id === "games" && pendingFinishedCount > 0 && (
                 <span className="absolute top-2 right-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
               )}
-              <span className="text-lg leading-none">{tab.icon}</span>
-              <span className="text-[11px] font-semibold leading-none">{tab.label}</span>
+              <span className="text-base sm:text-lg leading-none">{tab.icon}</span>
+              <span className="text-[10px] sm:text-[11px] font-semibold leading-none truncate max-w-[52px] sm:max-w-none">{tab.label}</span>
             </button>
           ))}
         </div>
