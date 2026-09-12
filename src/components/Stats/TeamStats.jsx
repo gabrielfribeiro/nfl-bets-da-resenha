@@ -245,7 +245,11 @@ export default function TeamStats({
   const singleTeamBets = useMemo(() => {
     if (!bets) return [];
     return bets.filter(
-      (b) => b.teamAId === singleTeamId || b.teamBId === singleTeamId || b.betOnTeamId === singleTeamId
+      (b) =>
+        b.teamAId === singleTeamId ||
+        b.teamBId === singleTeamId ||
+        b.bettingOnTeamId === singleTeamId ||
+        b.betOnTeamId === singleTeamId
     );
   }, [bets, singleTeamId]);
 
@@ -897,24 +901,28 @@ export default function TeamStats({
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
                       {h2hBets.map((bet) => {
-                        const betOn = getTeamById(bet.betOnTeamId);
+                        const betOnTeamId = bet.bettingOnTeamId || bet.betOnTeamId || bet.teamAId;
+                        const betOn = getTeamById(betOnTeamId);
                         return (
                           <div
                             key={bet.id}
                             className="bg-gray-950/80 border border-gray-800/80 p-3 rounded-xl flex items-center justify-between text-xs"
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <img
-                                src={getLogoUrl(betOn)}
-                                alt=""
-                                className="w-6 h-6 object-contain flex-shrink-0"
-                              />
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-xl bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
+                                🎟️
+                              </div>
                               <div className="min-w-0">
                                 <p className="text-white font-bold truncate">
                                   {bet.userName || "Apostador"}
+                                  {betOn && (
+                                    <span className="text-[11px] text-gray-400 font-semibold ml-1">
+                                      ({betOn.name})
+                                    </span>
+                                  )}
                                 </p>
                                 <p className="text-[10px] text-gray-400">
-                                  Rodada #{bet.round} • R$ {bet.amount?.toFixed(2)} @{bet.odd?.toFixed(2)}
+                                  Rodada #{bet.round} • R$ {Number(bet.amount || 0).toFixed(2)} @{Number(bet.odd || 1).toFixed(2)}
                                 </p>
                               </div>
                             </div>
@@ -1583,24 +1591,28 @@ export default function TeamStats({
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {singleTeamBets.map((bet) => {
-                          const betOn = getTeamById(bet.betOnTeamId);
+                          const betOnTeamId = bet.bettingOnTeamId || bet.betOnTeamId || bet.teamAId;
+                          const betOn = getTeamById(betOnTeamId);
                           return (
                             <div
                               key={bet.id}
                               className="bg-gray-950/80 border border-gray-800/80 p-3.5 rounded-2xl flex items-center justify-between text-xs"
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <img
-                                  src={getLogoUrl(betOn)}
-                                  alt=""
-                                  className="w-7 h-7 object-contain flex-shrink-0"
-                                />
+                                <div className="w-8 h-8 rounded-xl bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
+                                  🎟️
+                                </div>
                                 <div className="min-w-0">
                                   <p className="text-white font-bold truncate">
                                     {bet.userName || "Apostador"}
+                                    {betOn && (
+                                      <span className="text-[11px] text-gray-400 font-semibold ml-1">
+                                        ({betOn.name})
+                                      </span>
+                                    )}
                                   </p>
                                   <p className="text-[10px] text-gray-400">
-                                    Rodada #{bet.round} • R$ {bet.amount?.toFixed(2)} @{bet.odd?.toFixed(2)}
+                                    Rodada #{bet.round} • R$ {Number(bet.amount || 0).toFixed(2)} @{Number(bet.odd || 1).toFixed(2)}
                                   </p>
                                 </div>
                               </div>
