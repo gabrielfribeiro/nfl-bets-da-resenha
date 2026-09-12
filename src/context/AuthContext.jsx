@@ -121,6 +121,8 @@ export function AuthProvider({ children }) {
         friendlyMessage = "Operação cancelada.";
       } else if (err.code === "auth/popup-blocked") {
         friendlyMessage = "Popup bloqueado pelo navegador. Permita popups para este site.";
+      } else if (err.code === "auth/unauthorized-domain") {
+        friendlyMessage = "Domínio não autorizado no Firebase Console. Adicione seu domínio em Firebase > Authentication > Settings > Authorized Domains.";
       } else if (err.message) {
         friendlyMessage = err.message;
       }
