@@ -1,16 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { sounds } from "../../utils/sound";
-
-const TABS = [
-  { id: "dashboard", label: "Dashboard", icon: "🏠" },
-  { id: "games",     label: "Jogos NFL", icon: "🏈" },
-  { id: "new-bet",   label: "Nova Aposta", icon: "➕" },
-  { id: "history",   label: "Histórico",  icon: "📋" },
-  { id: "achievements", label: "Conquistas", icon: "🏅" },
-  { id: "settings",  label: "Config",     icon: "⚙️" },
-];
 
 export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
   const {
@@ -28,6 +19,25 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
   const [isMuted, setIsMuted] = useState(sounds.muted);
   const pendingBets = bets.filter((b) => b.result === "pending");
   const pendingCount = pendingBets.length;
+  const menuRef = useRef(null);
+
+  // Fecha o menu de perfil ao clicar fora
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   // Tabs dinâmicas: apenas Admin vê Config; demais usuários vêem Perfil
   const navTabs = [
@@ -201,7 +211,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
 
             {/* Auth Profile / Login Button */}
             {isAuthenticated ? (
-              <div className="relative flex-shrink-0">
+              <div className="relative flex-shrink-0" ref={menuRef}>
                 <button
                   type="button"
                   onClick={() => setShowUserMenu(!showUserMenu)}
