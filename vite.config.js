@@ -21,6 +21,7 @@ function getTrackEmoji(name) {
   if (lower.includes('rock') || lower.includes('guitar')) return '🎸'
   if (lower.includes('pagode') || lower.includes('samba')) return '🪕'
   if (lower.includes('piseiro') || lower.includes('forro')) return '🎹'
+  if (lower.includes('estrada') || lower.includes('modao') || lower.includes('sertanejo')) return '🤠'
   if (lower.includes('funk')) return '🔊'
   if (lower.includes('nfl')) return '🏈'
   return '🎵'
@@ -65,7 +66,6 @@ function audioScannerPlugin() {
       scanAndWritePlaylist()
     },
     configureServer(server) {
-      // Gera na inicialização
       scanAndWritePlaylist()
 
       // Endpoint dinâmico que sempre re-escaneia ao ser consultado
@@ -83,4 +83,10 @@ function audioScannerPlugin() {
 export default defineConfig({
   plugins: [react(), audioScannerPlugin()],
   base: './',
+  server: {
+    watch: {
+      // Ignora public/audio no watcher padrão do Vite para evitar travamento EBUSY no Windows
+      ignored: ['**/public/audio/**', '**/playlist.json'],
+    },
+  },
 })
