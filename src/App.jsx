@@ -74,7 +74,9 @@ function AppContent() {
             onClearInitialMatchup={() => setPreselectedMatchup(null)}
           />
         )}
-        {activeTab === "history" && <BetHistory />}
+        {activeTab === "history" && (
+          <BetHistory onOpenNewBet={() => setActiveTab("new-bet")} />
+        )}
         {activeTab === "achievements" && <Achievements />}
         {activeTab === "profile" && <UserProfile onOpenTab={setActiveTab} />}
         {activeTab === "rules" && <Rules onOpenTab={setActiveTab} />}
