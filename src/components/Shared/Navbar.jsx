@@ -101,10 +101,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     { id: "stats",     label: "Stats",     icon: "📊" },
     { id: "new-bet",   label: "Nova Aposta", icon: "➕" },
     { id: "history",   label: "Histórico",  icon: "📋" },
-    { id: "achievements", label: "Conquistas", icon: "🏅" },
+    { id: "achievements", label: "Conquistas", icon: "🏅", hideOnMobile: true },
     ...(isAdmin
-      ? [{ id: "settings", label: "Config", icon: "⚙️" }]
-      : [{ id: "profile", label: "Perfil", icon: "👤" }]),
+      ? [{ id: "settings", label: "Config", icon: "⚙️", hideOnMobile: true }]
+      : [{ id: "profile", label: "Perfil", icon: "👤", hideOnMobile: true }]),
   ];
 
   const toggleSound = () => {
@@ -473,11 +473,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 relative flex flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors
-                ${activeTab === tab.id
+              className={`flex-1 relative flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors ${
+                tab.hideOnMobile ? "hidden sm:flex" : "flex"
+              } ${
+                activeTab === tab.id
                   ? "text-yellow-400"
                   : "text-gray-600 hover:text-gray-400"
-                }`}
+              }`}
             >
               {tab.id === "games" && pendingFinishedCount > 0 && (
                 <span className="absolute top-2 right-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
