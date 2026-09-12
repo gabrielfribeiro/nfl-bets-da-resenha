@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { NFL_TEAMS, getTeamById, getLogoUrl } from "../../data/nflTeams";
@@ -26,6 +26,8 @@ export default function TeamStats({
     () => (Array.isArray(selectedTeamIds) ? selectedTeamIds : []),
     [selectedTeamIds]
   );
+
+  const userManuallyChangedRef = useRef(false);
 
   // Mode: 'h2h' (Confronto) | 'single' (Raio-X Individual)
   const [mode, setMode] = useState(initialTeamA && initialTeamB ? "h2h" : "h2h");
@@ -95,6 +97,41 @@ export default function TeamStats({
       isMounted = false;
     };
   }, [currentRound]);
+
+  // 1. Caso venha pela tela de jogos (ou se as props mudarem), traz carregado o confronto que foi clicado
+  useEffect(() => {
+    if (initialTeamA && initialTeamB) {
+      setTeamAId(initialTeamA);
+      setTeamBId(initialTeamB);
+      setSingleTeamId(initialTeamA);
+      setMode("h2h");
+      userManuallyChangedRef.current = false;
+    }
+  }, [initialTeamA, initialTeamB]);
+
+  // 2. Quando somente abrir (sem confronto pré-selecionado), traz carregado um confronto real da rodada
+  useEffect(() => {
+    if (initialTeamA && initialTeamB) return;
+    if (userManuallyChangedRef.current) return;
+
+    if (currentWeekGames && currentWeekGames.length > 0) {
+      // Prioridade 1: Confronto que envolva time(s) do nosso bolão
+      const leagueGame = currentWeekGames.find(
+        (g) =>
+          (g.awayTeam?.id && safeSelectedIds.includes(g.awayTeam.id)) ||
+          (g.homeTeam?.id && safeSelectedIds.includes(g.homeTeam.id))
+      );
+
+      // Prioridade 2: Primeiro confronto da rodada
+      const targetGame = leagueGame || currentWeekGames[0];
+      if (targetGame?.awayTeam?.id && targetGame?.homeTeam?.id) {
+        setTeamAId(targetGame.awayTeam.id);
+        setTeamBId(targetGame.homeTeam.id);
+        setSingleTeamId(targetGame.awayTeam.id);
+        setMode("h2h");
+      }
+    }
+  }, [currentWeekGames, initialTeamA, initialTeamB, safeSelectedIds]);
 
   // Load H2H match summary (ESPN Predictor, Odds e Boxscore) quando os dois times duelam
   useEffect(() => {
@@ -547,6 +584,7 @@ export default function TeamStats({
                         key={game.id}
                         type="button"
                         onClick={() => {
+                          userManuallyChangedRef.current = true;
                           setTeamAId(game.awayTeam.id);
                           setTeamBId(game.homeTeam.id);
                         }}
@@ -594,7 +632,10 @@ export default function TeamStats({
                 </label>
                 <select
                   value={teamAId}
-                  onChange={(e) => setTeamAId(e.target.value)}
+                  onChange={(e) => {
+                    userManuallyChangedRef.current = true;
+                    setTeamAId(e.target.value);
+                  }}
                   className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-black text-white focus:outline-none focus:border-yellow-400 transition-colors"
                 >
                   <optgroup label="Times no Bolão">
@@ -630,7 +671,10 @@ export default function TeamStats({
                 </label>
                 <select
                   value={teamBId}
-                  onChange={(e) => setTeamBId(e.target.value)}
+                  onChange={(e) => {
+                    userManuallyChangedRef.current = true;
+                    setTeamBId(e.target.value);
+                  }}
                   className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-black text-white focus:outline-none focus:border-yellow-400 transition-colors"
                 >
                   <optgroup label="Times no Bolão">

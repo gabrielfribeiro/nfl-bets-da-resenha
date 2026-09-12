@@ -36,6 +36,14 @@ function AppContent() {
     setActiveTab("stats");
   };
 
+  const handleTabChange = (tab) => {
+    if (tab === "stats") {
+      // Se clicou diretamente para abrir a aba de estatísticas, limpa confronto anterior
+      setPreselectedStatsMatchup(null);
+    }
+    setActiveTab(tab);
+  };
+
   // 1. Enquanto carrega a sessão de autenticação do Firebase
   if (loading) {
     return (
@@ -69,11 +77,11 @@ function AppContent() {
     <div className="bg-gray-950 min-h-screen text-white pb-28">
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onOpenShareModal={() => setShowShareModal(true)}
       />
       <main>
-        {activeTab === "dashboard" && <Dashboard onOpenTab={setActiveTab} />}
+        {activeTab === "dashboard" && <Dashboard onOpenTab={handleTabChange} />}
         {activeTab === "games" && (
           <GamesLive
             onQuickBet={handleQuickBet}
@@ -85,7 +93,7 @@ function AppContent() {
             initialTeamA={preselectedStatsMatchup?.teamA}
             initialTeamB={preselectedStatsMatchup?.teamB}
             onGoToNewBet={handleQuickBet}
-            onOpenTab={setActiveTab}
+            onOpenTab={handleTabChange}
           />
         )}
         {activeTab === "new-bet" && (

@@ -317,7 +317,19 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                 </div>
 
                 {/* Matchup Teams & Scores */}
-                <div className="grid grid-cols-7 items-center gap-2 py-2">
+                <div
+                  className={`grid grid-cols-7 items-center gap-2 py-2 ${
+                    onOpenStats && game.awayTeam?.id && game.homeTeam?.id
+                      ? "cursor-pointer hover:bg-gray-800/40 rounded-2xl transition-all px-1.5 active:scale-[0.99]"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    if (onOpenStats && game.awayTeam?.id && game.homeTeam?.id) {
+                      onOpenStats(game.awayTeam.id, game.homeTeam.id);
+                    }
+                  }}
+                  title="Clique para abrir as estatísticas e raio-x deste confronto"
+                >
                   {/* Away Team (3 cols) */}
                   <div className="col-span-3 flex items-center gap-3">
                     <img
@@ -567,7 +579,10 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                     {onOpenStats && game.awayTeam?.id && game.homeTeam?.id && (
                       <button
                         type="button"
-                        onClick={() => onOpenStats(game.awayTeam.id, game.homeTeam.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenStats(game.awayTeam.id, game.homeTeam.id);
+                        }}
                         title="Comparar estatísticas deste confronto"
                         className="px-2.5 py-1.5 rounded-xl font-black text-xs border transition-all flex items-center gap-1 bg-sky-500/10 hover:bg-sky-500 text-sky-400 hover:text-gray-950 border-sky-500/30 active:scale-95 shadow-sm"
                       >
