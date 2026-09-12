@@ -1,6 +1,12 @@
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { getTier } from "../../utils/tiers";
 
+const getShortName = (team) => {
+  if (!team?.name) return "";
+  const parts = team.name.trim().split(" ");
+  return parts[parts.length - 1];
+};
+
 export default function Podium({ topTeams, teams }) {
   if (!topTeams || topTeams.length < 3) return null;
 
@@ -45,9 +51,10 @@ export default function Podium({ topTeams, teams }) {
               />
             </div>
           </div>
-          <div className="h-8 sm:h-9 flex items-center justify-center w-full px-1">
-            <span className="text-[11px] sm:text-xs font-bold text-gray-200 line-clamp-2 leading-tight">
-              {second?.name}
+          <div className="h-6 sm:h-9 flex items-center justify-center w-full px-1">
+            <span className="text-xs font-bold text-gray-200 text-center leading-tight">
+              <span className="hidden sm:inline">{second?.name}</span>
+              <span className="sm:hidden font-black truncate">{getShortName(second)}</span>
             </span>
           </div>
           <span className="text-xs sm:text-sm font-black text-slate-300 my-0.5">
@@ -73,9 +80,10 @@ export default function Podium({ topTeams, teams }) {
               />
             </div>
           </div>
-          <div className="h-8 sm:h-9 flex items-center justify-center w-full px-1">
-            <span className="text-xs sm:text-sm font-black text-white line-clamp-2 leading-tight">
-              {first?.name}
+          <div className="h-6 sm:h-9 flex items-center justify-center w-full px-1">
+            <span className="text-xs sm:text-sm font-black text-white text-center leading-tight">
+              <span className="hidden sm:inline">{first?.name}</span>
+              <span className="sm:hidden font-black truncate">{getShortName(first)}</span>
             </span>
           </div>
           <span className="text-sm sm:text-base font-black text-yellow-400 my-0.5">
@@ -101,9 +109,10 @@ export default function Podium({ topTeams, teams }) {
               />
             </div>
           </div>
-          <div className="h-8 sm:h-9 flex items-center justify-center w-full px-1">
-            <span className="text-[11px] sm:text-xs font-bold text-gray-200 line-clamp-2 leading-tight">
-              {third?.name}
+          <div className="h-6 sm:h-9 flex items-center justify-center w-full px-1">
+            <span className="text-xs font-bold text-gray-200 text-center leading-tight">
+              <span className="hidden sm:inline">{third?.name}</span>
+              <span className="sm:hidden font-black truncate">{getShortName(third)}</span>
             </span>
           </div>
           <span className="text-xs sm:text-sm font-black text-amber-500 my-0.5">
