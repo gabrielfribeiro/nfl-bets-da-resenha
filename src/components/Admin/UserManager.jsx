@@ -59,14 +59,17 @@ export default function UserManager({ onBack }) {
     setActionLoading((prev) => ({ ...prev, [targetUser.uid]: true }));
     try {
       await updateUserRole(targetUser.uid, newRole);
+      const roleLabels = {
+        admin: "👑 Comissário",
+        moderator: "⭐ Moderador",
+        member: "🏈 Apostador",
+        viewer: "👀 Convidado",
+        blocked: "🚫 Bloqueado",
+      };
       showToast(
         "success",
         `Papel de "${targetUser.displayName || targetUser.email}" atualizado para ${
-          newRole === "admin"
-            ? "👑 Comissário"
-            : newRole === "blocked"
-            ? "🚫 Bloqueado"
-            : "🏈 Apostador"
+          roleLabels[newRole] || newRole
         }!`
       );
     } catch (err) {
@@ -125,7 +128,9 @@ export default function UserManager({ onBack }) {
     const matchesRole =
       roleFilter === "all" ||
       (roleFilter === "admin" && effectiveRole === "admin") ||
+      (roleFilter === "moderator" && effectiveRole === "moderator") ||
       (roleFilter === "member" && effectiveRole === "member") ||
+      (roleFilter === "viewer" && effectiveRole === "viewer") ||
       (roleFilter === "blocked" && effectiveRole === "blocked");
 
     const searchLower = searchQuery.toLowerCase();
@@ -142,10 +147,16 @@ export default function UserManager({ onBack }) {
   const adminCount = users.filter(
     (u) => ADMIN_EMAILS.includes(u.email?.toLowerCase()) || u.role === "admin"
   ).length;
+  const moderatorCount = users.filter(
+    (u) => !ADMIN_EMAILS.includes(u.email?.toLowerCase()) && u.role === "moderator"
+  ).length;
   const blockedCount = users.filter(
     (u) => !ADMIN_EMAILS.includes(u.email?.toLowerCase()) && u.role === "blocked"
   ).length;
-  const memberCount = Math.max(0, totalCount - adminCount - blockedCount);
+  const viewerCount = users.filter(
+    (u) => !ADMIN_EMAILS.includes(u.email?.toLowerCase()) && u.role === "viewer"
+  ).length;
+  const memberCount = Math.max(0, totalCount - adminCount - moderatorCount - viewerCount - blockedCount);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 animate-in fade-in duration-200">
@@ -195,24 +206,29 @@ export default function UserManager({ onBack }) {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-sm">
-          <span className="text-xs text-gray-400 font-semibold block">Total Cadastrados</span>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-3.5 shadow-sm">
+          <span className="text-[11px] text-gray-400 font-semibold block">Total Usuários</span>
           <span className="text-white font-black text-2xl block mt-1">{totalCount}</span>
         </div>
 
-        <div className="bg-gray-900 border border-yellow-500/30 rounded-2xl p-4 shadow-sm">
-          <span className="text-xs text-yellow-400 font-semibold block">👑 Comissários</span>
+        <div className="bg-gray-900 border border-yellow-500/30 rounded-2xl p-3.5 shadow-sm">
+          <span className="text-[11px] text-yellow-400 font-semibold block">👑 Comissários</span>
           <span className="text-yellow-400 font-black text-2xl block mt-1">{adminCount}</span>
         </div>
 
-        <div className="bg-gray-900 border border-emerald-500/30 rounded-2xl p-4 shadow-sm">
-          <span className="text-xs text-emerald-400 font-semibold block">🏈 Apostadores</span>
+        <div className="bg-gray-900 border border-purple-500/30 rounded-2xl p-3.5 shadow-sm">
+          <span className="text-[11px] text-purple-300 font-semibold block">⭐ Moderadores</span>
+          <span className="text-purple-300 font-black text-2xl block mt-1">{moderatorCount}</span>
+        </div>
+
+        <div className="bg-gray-900 border border-emerald-500/30 rounded-2xl p-3.5 shadow-sm">
+          <span className="text-[11px] text-emerald-400 font-semibold block">🏈 Apostadores</span>
           <span className="text-emerald-400 font-black text-2xl block mt-1">{memberCount}</span>
         </div>
 
-        <div className="bg-gray-900 border border-red-500/30 rounded-2xl p-4 shadow-sm">
-          <span className="text-xs text-red-400 font-semibold block">🚫 Bloqueados</span>
+        <div className="bg-gray-900 border border-red-500/30 rounded-2xl p-3.5 shadow-sm">
+          <span className="text-[11px] text-red-400 font-semibold block">🚫 Bloqueados</span>
           <span className="text-red-400 font-black text-2xl block mt-1">{blockedCount}</span>
         </div>
       </div>
@@ -239,7 +255,9 @@ export default function UserManager({ onBack }) {
             {[
               { id: "all", label: `Todos (${totalCount})` },
               { id: "admin", label: `Comissários (${adminCount})` },
+              { id: "moderator", label: `Moderadores (${moderatorCount})` },
               { id: "member", label: `Apostadores (${memberCount})` },
+              { id: "viewer", label: `Convidados (${viewerCount})` },
               { id: "blocked", label: `Bloqueados (${blockedCount})` },
             ].map((tab) => (
               <button
@@ -327,6 +345,14 @@ export default function UserManager({ onBack }) {
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-yellow-400/20 text-yellow-400 border border-yellow-400/30">
                             👑 Comissário
                           </span>
+                        ) : effectiveRole === "moderator" ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            ⭐ Moderador
+                          </span>
+                        ) : effectiveRole === "viewer" ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gray-800 text-gray-300 border border-gray-700">
+                            👀 Convidado
+                          </span>
                         ) : isBlocked ? (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-red-500/20 text-red-400 border border-red-500/30">
                             🚫 Acesso Revogado
@@ -402,16 +428,26 @@ export default function UserManager({ onBack }) {
                           className={`text-xs font-bold rounded-xl px-3 py-1.5 border focus:outline-none transition-all cursor-pointer ${
                             effectiveRole === "admin"
                               ? "bg-yellow-400/20 text-yellow-300 border-yellow-400/40"
+                              : effectiveRole === "moderator"
+                              ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
                               : isBlocked
                               ? "bg-red-500/20 text-red-300 border-red-500/40"
+                              : effectiveRole === "viewer"
+                              ? "bg-gray-900 text-gray-300 border-gray-700"
                               : "bg-gray-950 text-emerald-400 border-gray-800"
                           }`}
                         >
                           <option value="member" className="bg-gray-900 text-white">
                             🏈 Apostador (Membro)
                           </option>
+                          <option value="moderator" className="bg-gray-900 text-purple-300">
+                            ⭐ Moderador (Mod)
+                          </option>
                           <option value="admin" className="bg-gray-900 text-yellow-400">
                             👑 Comissário (Admin)
+                          </option>
+                          <option value="viewer" className="bg-gray-900 text-gray-300">
+                            👀 Convidado (Leitura)
                           </option>
                           <option value="blocked" className="bg-gray-900 text-red-400">
                             🚫 Revogado (Bloqueado)

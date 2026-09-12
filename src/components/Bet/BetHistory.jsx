@@ -11,7 +11,7 @@ const RESULT_CONFIG = {
 
 export default function BetHistory() {
   const { bets, updateBetResult, deleteBet } = useBet();
-  const { isAdmin } = useAuth();
+  const { canManageBets } = useAuth();
   const [filterResult, setFilterResult] = useState("all");
   const [filterTeam, setFilterTeam] = useState("all");
   const [expandedId, setExpandedId] = useState(null);
@@ -79,7 +79,7 @@ export default function BetHistory() {
             onToggle={() => setExpandedId(expandedId === bet.id ? null : bet.id)}
             onUpdateResult={updateBetResult}
             onDelete={deleteBet}
-            isAdmin={isAdmin}
+            isAdmin={canManageBets}
           />
         ))}
       </div>
