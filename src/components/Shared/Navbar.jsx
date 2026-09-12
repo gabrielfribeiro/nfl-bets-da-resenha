@@ -94,10 +94,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     };
   }, [showUserMenu]);
 
-  // Tabs dinâmicas: apenas Admin vê Config; demais usuários vêem Perfil
   const navTabs = [
     { id: "dashboard", label: "Dashboard", icon: "🏠" },
     { id: "games",     label: "Jogos NFL", icon: "🏈" },
+    { id: "stats",     label: "Stats",     icon: "📊" },
     { id: "new-bet",   label: "Nova Aposta", icon: "➕" },
     { id: "history",   label: "Histórico",  icon: "📋" },
     { id: "achievements", label: "Conquistas", icon: "🏅" },
@@ -264,6 +264,21 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               </button>
             )}
 
+            {/* Quick Stats Link */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("stats")}
+              title="Estatísticas e Raio-X dos Times"
+              className={`h-11 hidden md:flex items-center justify-center gap-1.5 px-3 rounded-xl border text-xs font-black transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
+                activeTab === "stats"
+                  ? "bg-yellow-400 text-gray-950 border-yellow-400 shadow-md shadow-yellow-400/20"
+                  : "bg-gray-900/90 hover:bg-gray-800 text-gray-300 hover:text-white border-gray-800"
+              }`}
+            >
+              <span>📊</span>
+              <span className="hidden xl:inline">Stats</span>
+            </button>
+
             {/* Quick Rules Link */}
             <button
               type="button"
@@ -333,6 +348,19 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                     >
                       <span>👤</span>
                       <span>Meu Perfil & Liga</span>
+                    </button>
+
+                    {/* Estatísticas & Confrontos */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setActiveTab("stats");
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 text-xs text-sky-400 hover:bg-sky-400/10 font-bold flex items-center gap-2 transition-colors border-b border-gray-800/80"
+                    >
+                      <span>📊</span>
+                      <span>Stats & Confrontos</span>
                     </button>
 
                     {/* Regras Oficiais */}
@@ -439,12 +467,12 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
 
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-40 h-16">
-        <div className="max-w-lg mx-auto flex h-full items-center">
+        <div className="max-w-2xl mx-auto flex h-full items-center">
           {navTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 relative flex flex-col items-center justify-center h-full py-1 gap-1 transition-colors
+              className={`flex-1 relative flex flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors
                 ${activeTab === tab.id
                   ? "text-yellow-400"
                   : "text-gray-600 hover:text-gray-400"
@@ -453,8 +481,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               {tab.id === "games" && pendingCount > 0 && (
                 <span className="absolute top-2 right-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
               )}
-              <span className="text-lg leading-none">{tab.icon}</span>
-              <span className="text-[11px] font-semibold leading-none">{tab.label}</span>
+              <span className="text-base sm:text-lg leading-none">{tab.icon}</span>
+              <span className="text-[10px] sm:text-[11px] font-semibold leading-none truncate max-w-[52px] sm:max-w-none">{tab.label}</span>
             </button>
           ))}
         </div>

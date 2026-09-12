@@ -4,7 +4,7 @@ import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { getLogoUrl } from "../../data/nflTeams";
 
-export default function GamesLive({ onQuickBet }) {
+export default function GamesLive({ onQuickBet, onOpenStats }) {
   const { selectedTeamIds, bets, updateBetResult, powerUpsList, currentRound } = useBet();
   const { isAdmin, canManageBets, isAuthenticated, setShowLoginModal } = useAuth();
   const [games, setGames] = useState([]);
@@ -556,22 +556,36 @@ export default function GamesLive({ onQuickBet }) {
                     )}
                   </div>
 
-                  {onQuickBet && gameBets.length === 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!isAuthenticated) {
-                          setShowLoginModal(true);
-                          return;
-                        }
-                        onQuickBet(game.awayTeam.id, game.homeTeam.id, selectedWeek);
-                      }}
-                      className="flex-shrink-0 px-3 py-1.5 rounded-xl font-black text-xs border transition-all flex items-center gap-1.5 shadow-sm bg-yellow-400/10 hover:bg-yellow-400 text-yellow-400 hover:text-gray-950 border-yellow-400/30 active:scale-95"
-                    >
-                      <span>⚡</span>
-                      <span>Apostar</span>
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {onOpenStats && game.awayTeam?.id && game.homeTeam?.id && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenStats(game.awayTeam.id, game.homeTeam.id)}
+                        title="Comparar estatísticas deste confronto"
+                        className="px-2.5 py-1.5 rounded-xl font-black text-xs border transition-all flex items-center gap-1 bg-sky-500/10 hover:bg-sky-500 text-sky-400 hover:text-gray-950 border-sky-500/30 active:scale-95 shadow-sm"
+                      >
+                        <span>📊</span>
+                        <span className="hidden sm:inline">Stats</span>
+                      </button>
+                    )}
+
+                    {onQuickBet && gameBets.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            setShowLoginModal(true);
+                            return;
+                          }
+                          onQuickBet(game.awayTeam.id, game.homeTeam.id, selectedWeek);
+                        }}
+                        className="px-3 py-1.5 rounded-xl font-black text-xs border transition-all flex items-center gap-1.5 shadow-sm bg-yellow-400/10 hover:bg-yellow-400 text-yellow-400 hover:text-gray-950 border-yellow-400/30 active:scale-95"
+                      >
+                        <span>⚡</span>
+                        <span>Apostar</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
