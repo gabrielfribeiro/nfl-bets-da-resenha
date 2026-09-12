@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getLogoUrl } from "../../data/nflTeams";
 
 export default function GamesLive({ onQuickBet, onOpenStats }) {
-  const { selectedTeamIds, bets, updateBetResult, powerUpsList, currentRound } = useBet();
+  const { selectedTeamIds, bets, updateBetResult, powerUpsList, currentRound, registerGames } = useBet();
   const { isAdmin, canManageBets, isAuthenticated, setShowLoginModal } = useAuth();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +27,7 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
       const res = await fetchNflScoreboard(weekNum);
       if (res.success) {
         setGames(res.games);
+        registerGames?.(res.games);
         if (res.currentWeek && !weekNum) {
           setSelectedWeek(res.currentWeek);
         }
@@ -401,11 +402,17 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                 {/* Bets created for this game */}
                 {gameBets.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-800/80 space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className="text-[10px] font-black uppercase tracking-wider text-yellow-400 flex items-center gap-1.5">
                         <span>🎯</span>
                         <span>Sua Aposta neste Jogo ({gameBets.length})</span>
                       </span>
+                      {game.isCompleted && gameBets.some((b) => b.result === "pending") && (
+                        <span className="text-[10px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                          <span>⚠️</span>
+                          <span>Jogo Finalizado · Aguardando Resolução</span>
+                        </span>
+                      )}
                     </div>
 
                     {gameBets.map((bet) => {

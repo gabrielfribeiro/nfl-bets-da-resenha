@@ -11,14 +11,14 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     isSyncingNflWeek,
     totalPot,
     liveGamesCount,
+    pendingFinishedBets,
+    pendingFinishedCount = 0,
     isCloudEnabled,
     cloudSyncStatus,
   } = useBet();
   const { user, userProfile, isAdmin, isModerator, role, isAuthenticated, logout, setShowLoginModal } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMuted, setIsMuted] = useState(sounds.muted);
-  const pendingBets = bets.filter((b) => b.result === "pending");
-  const pendingCount = pendingBets.length;
   const menuRef = useRef(null);
 
   const isMaster = Boolean(
@@ -431,23 +431,26 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
           </div>
         </div>
 
-        {/* AVISO DE APOSTAS PENDENTES NO HEADER */}
-        {pendingCount > 0 && (
+        {/* AVISO DE APOSTAS PENDENTES DE JOGOS JÁ ENCERRADOS */}
+        {pendingFinishedCount > 0 && (
           <div className="bg-gradient-to-r from-amber-950/90 via-yellow-950/70 to-amber-950/90 border-t border-b border-yellow-500/40 px-4 sm:px-8 py-2.5 shadow-lg">
             <div className="w-full flex items-center justify-between gap-4">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="text-lg flex-shrink-0 animate-bounce">⚠️</span>
                 <div className="min-w-0">
                   <p className="text-xs font-black text-yellow-300 uppercase tracking-wide flex items-center gap-1.5 truncate">
-                    <span>Apostas Pendentes</span>
+                    <span>Jogos Encerrados</span>
                     <span className="bg-yellow-400 text-gray-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">
-                      {pendingCount}
+                      {pendingFinishedCount}
+                    </span>
+                    <span className="text-[10px] text-yellow-400/80 font-semibold lowercase">
+                      (aguardando resultado)
                     </span>
                   </p>
-                  <p className="text-[11px] text-yellow-200/80 truncate">
-                    {pendingCount === 1
-                      ? "Há 1 aposta aguardando resolução de Green/Red para atualizar os potes."
-                      : `Há ${pendingCount} apostas aguardando resolução de Green/Red para atualizar os potes.`}
+                  <p className="text-[11px] text-yellow-200/90 truncate">
+                    {pendingFinishedCount === 1
+                      ? "1 aposta possui jogo já encerrado aguardando resolução de Green/Red para atualizar os potes."
+                      : `${pendingFinishedCount} apostas possuem jogos já encerrados aguardando resolução de Green/Red para atualizar os potes.`}
                   </p>
                 </div>
               </div>
@@ -455,9 +458,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                 <button
                   type="button"
                   onClick={() => setActiveTab("games")}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs px-3 py-1 rounded-xl shadow transition-all hover:scale-105"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
                 >
-                  Resolver nos Jogos ➜
+                  <span>Resolver nos Jogos</span>
+                  <span>➜</span>
                 </button>
               </div>
             </div>
@@ -478,7 +482,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                   : "text-gray-600 hover:text-gray-400"
                 }`}
             >
-              {tab.id === "games" && pendingCount > 0 && (
+              {tab.id === "games" && pendingFinishedCount > 0 && (
                 <span className="absolute top-2 right-4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
               )}
               <span className="text-base sm:text-lg leading-none">{tab.icon}</span>
