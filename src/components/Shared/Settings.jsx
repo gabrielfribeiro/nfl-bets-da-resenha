@@ -540,7 +540,7 @@ export default function Settings({ onOpenUserManager, onOpenTab }) {
                 <button
                   type="button"
                   onClick={() => onOpenTab("rules")}
-                  className="px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs transition-all shadow-md shadow-yellow-400/10 flex items-center gap-1.5 self-start sm:self-auto hover:scale-105 active:scale-95"
+                  className="px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs transition-all shadow-md shadow-yellow-400/10 flex items-center gap-1.5 self-start sm:self-auto hover:scale-105 active:scale-95 whitespace-nowrap"
                 >
                   <span>Ver Regras Oficiais</span>
                   <span>➜</span>
@@ -548,10 +548,7 @@ export default function Settings({ onOpenUserManager, onOpenTab }) {
               )}
             </div>
           </div>
-        </div>
 
-        {/* RIGHT COLUMN: Power-ups Config, Backup/Restore, Danger Zone (6 cols) */}
-        <div className="lg:col-span-6 space-y-6">
           {/* Card: Gestão de Usuários & Permissões (Admin Only) */}
           {isAdmin && (
             <div className="bg-gradient-to-br from-gray-900 to-gray-950 border border-yellow-500/30 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden">
@@ -572,22 +569,126 @@ export default function Settings({ onOpenUserManager, onOpenTab }) {
               </div>
 
               <p className="text-gray-300 text-xs leading-relaxed mb-4">
-                Gerencie quem pode apostar, promova outros participantes a <strong>Comissários</strong> ou <strong>revogue acessos</strong> instantaneamente.
+                Gerencie quem pode apostar, vincule times da NFL, aprove novos cadastros ou <strong>revogue acessos</strong> instantaneamente.
               </p>
 
-              {onOpenTab && (
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
-                  onClick={() => onOpenTab("rules")}
-                  className="w-full mt-2 py-2 px-4 rounded-xl bg-gray-800/90 hover:bg-gray-800 text-gray-300 hover:text-white font-bold text-xs border border-gray-700/80 transition-all flex items-center justify-center gap-1.5"
+                  onClick={() => {
+                    if (onOpenUserManager) onOpenUserManager();
+                    else if (onOpenTab) onOpenTab("users");
+                  }}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs transition-all shadow-md shadow-yellow-400/20 flex items-center justify-center gap-1.5 active:scale-95"
                 >
-                  <span>🛡️ Consultar Matriz de Permissões</span>
+                  <span>👥 Painel de Usuários</span>
                   <span>➜</span>
                 </button>
-              )}
+                {onOpenTab && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenTab("rules")}
+                    className="py-2.5 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-bold text-xs border border-gray-700 transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
+                  >
+                    <span>🛡️ Permissões</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
+          {/* Card: Ações do Sistema */}
+          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+            <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest mb-3 flex items-center gap-2">
+              <span>⚡</span>
+              <span>Ações do Sistema</span>
+            </h3>
+
+            <div className="space-y-3">
+              {/* NFL Round Sync & Controls */}
+              <div className="p-4 rounded-2xl bg-gray-950/70 border border-gray-800 space-y-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🏈</span>
+                    <span className="text-white font-bold text-sm whitespace-nowrap">
+                      Semana da NFL & Rodada
+                    </span>
+                  </div>
+                  <span className="bg-yellow-400 text-gray-950 text-xs font-black px-2.5 py-1 rounded-xl whitespace-nowrap shadow-sm">
+                    Rodada #{currentRound}
+                  </span>
+                </div>
+
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  A rodada segue o calendário oficial da NFL obtido automaticamente via ESPN.
+                </p>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const week = await syncWithNflWeek();
+                      if (week) {
+                        showFeedback("success", `Sincronizado com a Semana #${week} da NFL!`);
+                      } else {
+                        showFeedback("error", "Não foi possível sincronizar com a ESPN agora.");
+                      }
+                    }}
+                    disabled={isSyncingNflWeek}
+                    className="flex-1 py-2 px-3 rounded-xl bg-yellow-400/20 hover:bg-yellow-400 text-yellow-400 hover:text-gray-950 border border-yellow-400/40 font-bold text-xs transition-all flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
+                  >
+                    <span className={isSyncingNflWeek ? "animate-spin" : ""}>🔄</span>
+                    <span>{isSyncingNflWeek ? "Sincronizando..." : "Sincronizar c/ ESPN"}</span>
+                  </button>
+                  <select
+                    value={currentRound}
+                    onChange={(e) => {
+                      const r = Number(e.target.value);
+                      setCurrentRound(r);
+                      showFeedback("success", `Rodada alterada para a Semana #${r}!`);
+                    }}
+                    className="py-2 px-3 rounded-xl bg-gray-800 border border-gray-700 text-white font-bold text-xs focus:outline-none focus:border-yellow-400 whitespace-nowrap flex-shrink-0"
+                  >
+                    {Array.from({ length: 18 }, (_, i) => i + 1).map((r) => (
+                      <option key={r} value={r}>
+                        Semana #{r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Reset Everything */}
+              <div className="p-4 rounded-2xl bg-red-950/10 border border-red-500/20 space-y-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-red-400 font-bold text-sm flex items-center gap-2 whitespace-nowrap">
+                    <span>🔄</span>
+                    <span>Resetar Todo o Bolão</span>
+                  </p>
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowResetConfirm(true)}
+                      className="px-3.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 font-bold text-xs transition-all whitespace-nowrap shadow-sm active:scale-95"
+                    >
+                      Resetar Dados
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-gray-500 italic bg-gray-950 px-2.5 py-1 rounded-lg border border-gray-800">
+                      🔒 Somente Comissário
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-500 text-xs">
+                  Apaga todos os dados e volta para a tela de escolha dos 16 times.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Power-ups Config, Backup/Restore, Cloud (6 cols) */}
+        <div className="lg:col-span-6 space-y-6">
           {/* Card: Configuração de Poderes */}
           <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
@@ -967,95 +1068,6 @@ export default function Settings({ onOpenUserManager, onOpenTab }) {
                   </p>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Card: Ações do Sistema */}
-          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 sm:p-6 shadow-xl">
-            <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-              <span>⚡</span>
-              <span>Ações do Sistema</span>
-            </h3>
-
-            <div className="space-y-3">
-              {/* NFL Round Sync & Controls */}
-              <div className="p-4 rounded-2xl bg-gray-950/70 border border-gray-800 space-y-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🏈</span>
-                    <span className="text-white font-bold text-sm whitespace-nowrap">
-                      Semana da NFL & Rodada
-                    </span>
-                  </div>
-                  <span className="bg-yellow-400 text-gray-950 text-xs font-black px-2.5 py-1 rounded-xl whitespace-nowrap shadow-sm">
-                    Rodada #{currentRound}
-                  </span>
-                </div>
-
-                <p className="text-gray-400 text-xs leading-relaxed">
-                  A rodada segue o calendário oficial da NFL obtido automaticamente via ESPN.
-                </p>
-
-                <div className="flex items-center gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const week = await syncWithNflWeek();
-                      if (week) {
-                        showFeedback("success", `Sincronizado com a Semana #${week} da NFL!`);
-                      } else {
-                        showFeedback("error", "Não foi possível sincronizar com a ESPN agora.");
-                      }
-                    }}
-                    disabled={isSyncingNflWeek}
-                    className="flex-1 py-2 px-3 rounded-xl bg-yellow-400/20 hover:bg-yellow-400 text-yellow-400 hover:text-gray-950 border border-yellow-400/40 font-bold text-xs transition-all flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
-                  >
-                    <span className={isSyncingNflWeek ? "animate-spin" : ""}>🔄</span>
-                    <span>{isSyncingNflWeek ? "Sincronizando..." : "Sincronizar c/ ESPN"}</span>
-                  </button>
-                  <select
-                    value={currentRound}
-                    onChange={(e) => {
-                      const r = Number(e.target.value);
-                      setCurrentRound(r);
-                      showFeedback("success", `Rodada alterada para a Semana #${r}!`);
-                    }}
-                    className="py-2 px-3 rounded-xl bg-gray-800 border border-gray-700 text-white font-bold text-xs focus:outline-none focus:border-yellow-400 whitespace-nowrap flex-shrink-0"
-                  >
-                    {Array.from({ length: 18 }, (_, i) => i + 1).map((r) => (
-                      <option key={r} value={r}>
-                        Semana #{r}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Reset Everything */}
-              <div className="p-4 rounded-2xl bg-red-950/10 border border-red-500/20 space-y-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <p className="text-red-400 font-bold text-sm flex items-center gap-2 whitespace-nowrap">
-                    <span>🔄</span>
-                    <span>Resetar Todo o Bolão</span>
-                  </p>
-                  {isAdmin ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowResetConfirm(true)}
-                      className="px-3.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 font-bold text-xs transition-all whitespace-nowrap shadow-sm active:scale-95"
-                    >
-                      Resetar Dados
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-gray-500 italic bg-gray-950 px-2.5 py-1 rounded-lg border border-gray-800">
-                      🔒 Somente Comissário
-                    </span>
-                  )}
-                </div>
-                <p className="text-gray-500 text-xs">
-                  Apaga todos os dados e volta para a tela de escolha dos 16 times.
-                </p>
-              </div>
             </div>
           </div>
         </div>
