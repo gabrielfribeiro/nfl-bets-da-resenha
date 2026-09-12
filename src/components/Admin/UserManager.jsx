@@ -7,6 +7,7 @@ import {
   updateUserTeam,
 } from "../../services/firebase";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
+import { ROLES_GUIDE } from "../../data/rolesGuide";
 
 export default function UserManager({ onBack }) {
   const { user: currentUser, isAdmin } = useAuth();
@@ -17,6 +18,7 @@ export default function UserManager({ onBack }) {
   const [roleFilter, setRoleFilter] = useState("all"); // 'all' | 'admin' | 'member' | 'blocked'
   const [actionLoading, setActionLoading] = useState({});
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
+  const [showRolesGuide, setShowRolesGuide] = useState(false);
 
   // Subscribe in real-time to users collection
   useEffect(() => {
@@ -123,7 +125,7 @@ export default function UserManager({ onBack }) {
   // Filtragem de Usuários
   const filteredUsers = users.filter((u) => {
     const isMaster = ADMIN_EMAILS.includes(u.email?.toLowerCase());
-    const effectiveRole = isMaster ? "admin" : u.role || "member";
+    const effectiveRole = isMaster ? "admin" : u.role || "viewer";
 
     const matchesRole =
       roleFilter === "all" ||
@@ -233,6 +235,73 @@ export default function UserManager({ onBack }) {
         </div>
       </div>
 
+      {/* Collapsible Roles Cheat-sheet */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => setShowRolesGuide(!showRolesGuide)}
+          className="w-full p-3.5 rounded-2xl bg-gray-900 border border-gray-800 hover:border-yellow-500/30 flex items-center justify-between text-xs font-bold transition-all shadow-sm group"
+        >
+          <div className="flex items-center gap-2 text-gray-300 group-hover:text-white">
+            <span className="text-base">🛡️</span>
+            <span>Dúvida sobre permissões? Clique para ver o que cada papel pode fazer e acessar</span>
+          </div>
+          <span className="text-yellow-400 font-bold flex items-center gap-1">
+            <span>{showRolesGuide ? "Ocultar Guia ▲" : "Ver Guia de Permissões ▼"}</span>
+          </span>
+        </button>
+
+        {showRolesGuide && (
+          <div className="mt-3 p-4 rounded-3xl bg-gray-900/90 border border-gray-800 space-y-3 animate-in fade-in duration-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {ROLES_GUIDE.map((role) => (
+                <div
+                  key={role.id}
+                  className={`p-3.5 rounded-2xl border ${role.containerBg} ${role.borderColor} space-y-2 text-xs`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{role.icon}</span>
+                      <span className="font-bold text-white text-sm">{role.name}</span>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${role.badgeColor}`}>
+                      {role.shortName}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-[11px] leading-relaxed">{role.description}</p>
+
+                  <div className="pt-2 border-t border-white/5 space-y-1">
+                    <span className="text-[10px] font-bold text-emerald-400 block uppercase">Pode:</span>
+                    <ul className="text-gray-300 text-[11px] space-y-0.5">
+                      {role.canDo.slice(0, 3).map((item, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <span className="text-emerald-400">✓</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {role.cannotDo && role.cannotDo.length > 0 && (
+                    <div className="pt-1.5 border-t border-white/5 space-y-0.5">
+                      <span className="text-[10px] font-bold text-red-400 block uppercase">Não pode:</span>
+                      <ul className="text-gray-400 text-[11px] space-y-0.5">
+                        {role.cannotDo.slice(0, 2).map((item, i) => (
+                          <li key={i} className="flex items-start gap-1.5">
+                            <span className="text-red-400">✕</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Filter and Search Bar */}
       <div className="bg-gray-900 border border-gray-800 rounded-3xl p-4 sm:p-5 shadow-xl mb-6 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -294,7 +363,7 @@ export default function UserManager({ onBack }) {
           <div className="divide-y divide-gray-800/80">
             {filteredUsers.map((u) => {
               const isMaster = ADMIN_EMAILS.includes(u.email?.toLowerCase());
-              const effectiveRole = isMaster ? "admin" : u.role || "member";
+              const effectiveRole = isMaster ? "admin" : u.role || "viewer";
               const isBlocked = effectiveRole === "blocked";
               const isCurrentUser = u.uid === currentUser?.uid;
               const isBusy = actionLoading[u.uid];

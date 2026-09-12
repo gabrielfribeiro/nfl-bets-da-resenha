@@ -9,7 +9,7 @@ import PotEvolutionChart from "./PotEvolutionChart";
 import { calculateTeamStreak } from "../../utils/streaks";
 import { getTeamById } from "../../data/nflTeams";
 
-export default function Dashboard() {
+export default function Dashboard({ onOpenTab }) {
   const { selectedTeamIds, teams, bets, currentRound, globalMaxWon, getMinBet } = useBet();
   const [showShare, setShowShare] = useState(false);
   const [activeView, setActiveView] = useState("TABLE"); // 'TABLE' | 'CHART' | 'CARDS'
@@ -56,13 +56,24 @@ export default function Dashboard() {
           <h2 className="text-white font-black text-2xl tracking-tight">Painel Principal</h2>
           <p className="text-gray-500 text-xs">Visão geral do bolão e andamento da temporada</p>
         </div>
-        <button
-          onClick={() => setShowShare(true)}
-          className="inline-flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-gray-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-105"
-        >
-          <span>📸</span>
-          <span>Card de Resenha</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {onOpenTab && (
+            <button
+              onClick={() => onOpenTab("rules")}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-900 hover:bg-gray-800 text-yellow-400 font-bold text-xs rounded-xl border border-yellow-400/30 transition-all hover:scale-105"
+            >
+              <span>📜</span>
+              <span className="hidden sm:inline">Regras</span>
+            </button>
+          )}
+          <button
+            onClick={() => setShowShare(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-gray-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-105"
+          >
+            <span>📸</span>
+            <span>Card de Resenha</span>
+          </button>
+        </div>
       </div>
       {/* Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">

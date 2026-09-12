@@ -7,7 +7,7 @@ import MatchupModal from "./MatchupModal";
 
 export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
   const { selectedTeamIds, teams, bets, addBet, currentRound, getMinBet, MAX_ODD, powerUps, powerUpsList } = useBet();
-  const { isAuthenticated, isBlocked, setShowLoginModal } = useAuth();
+  const { isAuthenticated, isBlocked, setShowLoginModal, isViewer, canPlaceBets } = useAuth();
 
   const [teamAId, setTeamAId] = useState(initialMatchup?.teamA || "");
   const [teamBId, setTeamBId] = useState(initialMatchup?.teamB || "");
@@ -86,6 +86,9 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
     e.preventDefault();
     if (!isAuthenticated) {
       setShowLoginModal(true);
+      return;
+    }
+    if (!canPlaceBets) {
       return;
     }
     if (!isValid) return;
@@ -197,6 +200,16 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
           >
             Fazer Login
           </button>
+        </div>
+      )}
+
+      {/* Viewer / Read-only Banner */}
+      {isAuthenticated && (isViewer || !canPlaceBets) && !isBlocked && (
+        <div className="mb-4 p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center gap-3 text-xs">
+          <span className="text-xl flex-shrink-0">👀</span>
+          <div className="text-sky-300 leading-relaxed">
+            <strong>Modo Somente Visualização:</strong> Sua conta foi cadastrada como <strong>Convidado</strong>. Para registrar palpites e associar seu time da NFL, solicite a um <strong>👑 Comissário</strong> para ativar seu acesso como Apostador.
+          </div>
         </div>
       )}
 
@@ -614,6 +627,15 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
               className="w-full py-4 rounded-2xl font-black text-base tracking-wide bg-red-950/40 text-red-400 border border-red-500/30 cursor-not-allowed opacity-70"
             >
               Acesso Revogado (Bloqueado)
+            </button>
+          ) : isViewer || !canPlaceBets ? (
+            <button
+              type="button"
+              disabled
+              className="w-full py-4 rounded-2xl font-black text-sm tracking-wide bg-sky-950/30 text-sky-400 border border-sky-500/30 cursor-not-allowed opacity-80 flex items-center justify-center gap-2"
+            >
+              <span>🔒</span>
+              <span>Palpites Bloqueados (Modo Somente Visualização)</span>
             </button>
           ) : (
             <button

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useBet } from "../../context/BetContext";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth, ADMIN_EMAILS } from "../../context/AuthContext";
 import { sounds } from "../../utils/sound";
 
 export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
@@ -20,6 +20,61 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
   const pendingBets = bets.filter((b) => b.result === "pending");
   const pendingCount = pendingBets.length;
   const menuRef = useRef(null);
+
+  const isMaster = Boolean(
+    user?.email && ADMIN_EMAILS?.includes(user.email.toLowerCase())
+  );
+
+  const getRoleInfo = () => {
+    if (isMaster) {
+      return {
+        label: "👑 Comissário",
+        badge: "👑 Comissário Master",
+        badgeClass: "bg-yellow-400 text-gray-950 font-black shadow-sm",
+        textColor: "text-yellow-400",
+      };
+    }
+    if (isAdmin) {
+      return {
+        label: "👑 Comissário",
+        badge: "👑 Comissário (Admin)",
+        badgeClass: "bg-yellow-400/20 text-yellow-400 border border-yellow-400/30",
+        textColor: "text-yellow-400",
+      };
+    }
+    if (isModerator || role === "moderator") {
+      return {
+        label: "⭐ Moderador",
+        badge: "⭐ Moderador",
+        badgeClass: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+        textColor: "text-purple-400",
+      };
+    }
+    if (role === "viewer") {
+      return {
+        label: "👀 Convidado",
+        badge: "👀 Convidado (Leitura)",
+        badgeClass: "bg-gray-800 text-gray-300 border border-gray-700",
+        textColor: "text-gray-400",
+      };
+    }
+    if (role === "blocked") {
+      return {
+        label: "🚫 Bloqueado",
+        badge: "🚫 Acesso Suspenso",
+        badgeClass: "bg-red-500/20 text-red-400 border border-red-500/30",
+        textColor: "text-red-400",
+      };
+    }
+    return {
+      label: "🏈 Apostador",
+      badge: "🏈 Apostador",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+      textColor: "text-emerald-400",
+    };
+  };
+
+  const roleInfo = getRoleInfo();
 
   // Fecha o menu de perfil ao clicar fora
   useEffect(() => {
@@ -209,6 +264,21 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               </button>
             )}
 
+            {/* Quick Rules Link */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("rules")}
+              title="Regras Oficiais do Bolão"
+              className={`h-11 hidden md:flex items-center justify-center gap-1.5 px-3 rounded-xl border text-xs font-black transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
+                activeTab === "rules"
+                  ? "bg-yellow-400 text-gray-950 border-yellow-400 shadow-md shadow-yellow-400/20"
+                  : "bg-gray-900/90 hover:bg-gray-800 text-gray-300 hover:text-white border-gray-800"
+              }`}
+            >
+              <span>📜</span>
+              <span className="hidden xl:inline">Regras</span>
+            </button>
+
             {/* Auth Profile / Login Button */}
             {isAuthenticated ? (
               <div className="relative flex-shrink-0" ref={menuRef}>
@@ -233,8 +303,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                     <span className="text-white font-bold text-xs max-w-[100px] truncate">
                       {userProfile?.displayName || user?.email?.split("@")[0]}
                     </span>
-                    <span className="text-[9px] text-yellow-400 font-extrabold uppercase mt-0.5">
-                      {isAdmin ? "👑 Comissário" : "🏈 Apostador"}
+                    <span className={`text-[9px] ${roleInfo.textColor} font-extrabold uppercase mt-0.5`}>
+                      {roleInfo.label}
                     </span>
                   </div>
                   <span className="text-gray-400 text-[10px]">▼</span>
@@ -247,8 +317,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                         {userProfile?.displayName || "Apostador"}
                       </p>
                       <p className="text-gray-400 text-[10px] truncate mt-0.5">{user?.email}</p>
-                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-yellow-400/20 text-yellow-400 border border-yellow-400/30">
-                        {isAdmin ? "👑 Comissário (Admin)" : isModerator ? "⭐ Moderador" : "🏈 Apostador"}
+                      <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black border ${roleInfo.badgeClass}`}>
+                        {roleInfo.badge}
                       </span>
                     </div>
 
@@ -263,6 +333,19 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                     >
                       <span>👤</span>
                       <span>Meu Perfil & Liga</span>
+                    </button>
+
+                    {/* Regras Oficiais */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setActiveTab("rules");
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 text-xs text-yellow-400 hover:bg-yellow-400/10 font-bold flex items-center gap-2 transition-colors border-b border-gray-800/80"
+                    >
+                      <span>📜</span>
+                      <span>Regras & Permissões</span>
                     </button>
 
                     {isAdmin && (

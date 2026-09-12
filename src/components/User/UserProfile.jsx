@@ -81,14 +81,26 @@ export default function UserProfile({ onOpenTab }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={logout}
-          className="px-4 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-500/30 text-xs font-bold transition-colors flex items-center gap-2 self-start sm:self-auto"
-        >
-          <span>🚪</span>
-          <span>Sair da Conta</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          {onOpenTab && (
+            <button
+              type="button"
+              onClick={() => onOpenTab("rules")}
+              className="px-4 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 text-yellow-400 border border-yellow-400/30 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <span>📜</span>
+              <span>Regras & Permissões</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={logout}
+            className="px-4 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-500/30 text-xs font-bold transition-colors flex items-center gap-2"
+          >
+            <span>🚪</span>
+            <span>Sair da Conta</span>
+          </button>
+        </div>
       </div>
 
       {/* Card 1: Dados do Usuário */}

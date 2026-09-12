@@ -496,6 +496,60 @@ export function BetProvider({ children }) {
     });
   }, [effectivePowerUpsList, setState, getCurrentUserResolver]);
 
+  const reopenBet = useCallback((betId) => {
+    setState((prev) => {
+      const bet = prev.bets.find((b) => b.id === betId);
+      if (!bet || bet.result === "pending") return prev;
+
+      const teamId = bet.bettingOnTeamId;
+      const teamState = prev.teams[teamId];
+      if (!teamState) return prev;
+
+      let newPot = teamState.pot;
+      let newWins = teamState.totalWins;
+      let newLosses = teamState.totalLosses;
+
+      const usedPowerUp = bet.powerUp;
+      const currentList = prev.powerUpsList ?? effectivePowerUpsList;
+      const powerObj = currentList.find((p) => p.id === usedPowerUp);
+
+      if (bet.result === "win") {
+        const multiplier = powerObj?.multiplier ?? (usedPowerUp === "double" ? 2 : 1);
+        const profit = bet.amount * (bet.odd - 1) * multiplier;
+        newPot = parseFloat(Math.max(0, teamState.pot - profit).toFixed(2));
+        newWins = Math.max(0, newWins - 1);
+      } else if (bet.result === "loss") {
+        if (powerObj?.type === "shield" || usedPowerUp === "shield") {
+          // Escudo protegeu o pote, nenhum valor financeiro a restaurar
+        } else {
+          newPot = parseFloat((teamState.pot + bet.amount).toFixed(2));
+          newLosses = Math.max(0, newLosses - 1);
+        }
+      }
+
+      const updatedBets = prev.bets.map((b) =>
+        b.id === betId
+          ? { ...b, result: "pending", potAfter: b.potBefore, resolvedBy: null }
+          : b
+      );
+
+      return {
+        ...prev,
+        bets: updatedBets,
+        teams: {
+          ...prev.teams,
+          [teamId]: {
+            ...teamState,
+            pot: newPot,
+            potHistory: [...teamState.potHistory, newPot],
+            totalWins: newWins,
+            totalLosses: newLosses,
+          },
+        },
+      };
+    });
+  }, [effectivePowerUpsList, setState]);
+
   const deleteBet = useCallback((betId) => {
     setState((prev) => ({
       ...prev,
@@ -709,6 +763,7 @@ export function BetProvider({ children }) {
         resetSetup,
         addBet,
         updateBetResult,
+        reopenBet,
         deleteBet,
         addPotFunds,
         nextRound,

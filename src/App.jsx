@@ -10,6 +10,7 @@ import Navbar from "./components/Shared/Navbar";
 import Settings from "./components/Shared/Settings";
 import UserManager from "./components/Admin/UserManager";
 import UserProfile from "./components/User/UserProfile";
+import Rules from "./components/Rules/Rules";
 import BroadcastTicker from "./components/Shared/BroadcastTicker";
 import LoginModal from "./components/Auth/LoginModal";
 
@@ -65,7 +66,7 @@ function AppContent() {
         onOpenShareModal={() => setShowShareModal(true)}
       />
       <main>
-        {activeTab === "dashboard" && <Dashboard />}
+        {activeTab === "dashboard" && <Dashboard onOpenTab={setActiveTab} />}
         {activeTab === "games" && <GamesLive onQuickBet={handleQuickBet} />}
         {activeTab === "new-bet" && (
           <NewBet
@@ -73,12 +74,18 @@ function AppContent() {
             onClearInitialMatchup={() => setPreselectedMatchup(null)}
           />
         )}
-        {activeTab === "history" && <BetHistory />}
+        {activeTab === "history" && (
+          <BetHistory onOpenNewBet={() => setActiveTab("new-bet")} />
+        )}
         {activeTab === "achievements" && <Achievements />}
         {activeTab === "profile" && <UserProfile onOpenTab={setActiveTab} />}
+        {activeTab === "rules" && <Rules onOpenTab={setActiveTab} />}
         {activeTab === "settings" && (
           isAdmin ? (
-            <Settings onOpenUserManager={() => setActiveTab("users")} />
+            <Settings
+              onOpenUserManager={() => setActiveTab("users")}
+              onOpenTab={setActiveTab}
+            />
           ) : (
             <UserProfile onOpenTab={setActiveTab} />
           )
