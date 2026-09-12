@@ -193,16 +193,15 @@ export default function TeamStats({
   const themeColor = singleTeam?.color || "#eab308";
   const themeAccent = singleTeam?.accent || "#ca8a04";
 
-  // League owner & pot data (safe for both object and array)
+  // League pot data (safe for both object and array)
   const getLeagueData = (teamId) => {
-    if (!teamId) return { owner: "Livre / Sem Dono", pot: 0, initialPot: 0, isInLeague: false };
+    if (!teamId) return { pot: 0, initialPot: 0, isInLeague: false };
     const teamObj =
       Array.isArray(leagueTeams)
         ? leagueTeams.find((t) => t.id === teamId)
         : (leagueTeams && typeof leagueTeams === "object" ? leagueTeams[teamId] : null);
 
     return {
-      owner: teamObj?.owner || "Livre / Sem Dono",
       pot: typeof teamObj?.pot === "number" ? teamObj.pot : 0,
       initialPot: typeof teamObj?.initialPot === "number" ? teamObj.initialPot : 0,
       isInLeague: safeSelectedIds.includes(teamId),
@@ -549,15 +548,19 @@ export default function TeamStats({
                     )}
                   </div>
 
-                  {/* League owner & pot */}
-                  <div className="mt-3 w-full bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80 text-xs flex items-center justify-between">
-                    <span className="text-gray-400 truncate">
-                      👤 {leagueDataA.owner}
-                    </span>
-                    <span className="text-yellow-400 font-black">
-                      R$ {leagueDataA.pot.toFixed(2)}
-                    </span>
-                  </div>
+                  {/* League pot */}
+                  {leagueDataA.isInLeague ? (
+                    <div className="mt-3 w-full bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80 text-xs flex items-center justify-between">
+                      <span className="text-gray-400 font-semibold">Pote no Bolão:</span>
+                      <span className="text-yellow-400 font-black">
+                        R$ {leagueDataA.pot.toFixed(2)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-3 w-full bg-gray-950/40 p-2 rounded-xl border border-gray-800/40 text-xs text-center text-gray-500">
+                      Time fora dos 16 da liga
+                    </div>
+                  )}
                 </div>
 
                 {/* Center VS & Advantage Score */}
@@ -638,15 +641,19 @@ export default function TeamStats({
                     )}
                   </div>
 
-                  {/* League owner & pot */}
-                  <div className="mt-3 w-full bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80 text-xs flex items-center justify-between">
-                    <span className="text-gray-400 truncate">
-                      👤 {leagueDataB.owner}
-                    </span>
-                    <span className="text-yellow-400 font-black">
-                      R$ {leagueDataB.pot.toFixed(2)}
-                    </span>
-                  </div>
+                  {/* League pot */}
+                  {leagueDataB.isInLeague ? (
+                    <div className="mt-3 w-full bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80 text-xs flex items-center justify-between">
+                      <span className="text-gray-400 font-semibold">Pote no Bolão:</span>
+                      <span className="text-yellow-400 font-black">
+                        R$ {leagueDataB.pot.toFixed(2)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-3 w-full bg-gray-950/40 p-2 rounded-xl border border-gray-800/40 text-xs text-center text-gray-500">
+                      Time fora dos 16 da liga
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1135,20 +1142,33 @@ export default function TeamStats({
 
                 {/* Bolão league card */}
                 <div className="w-full md:w-auto flex flex-col sm:flex-row md:flex-col gap-3 min-w-[240px]">
-                  <div className="bg-gray-950/80 border border-white/10 p-3.5 rounded-2xl flex-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                      No Bolão NFL Bets
-                    </span>
-                    <p className="text-white font-black text-sm truncate mt-0.5">
-                      👤 {singleLeagueData.owner}
-                    </p>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-800">
-                      <span className="text-xs text-gray-400">Pote Atual:</span>
-                      <span className="text-yellow-400 font-black text-base">
-                        R$ {singleLeagueData.pot.toFixed(2)}
+                  {singleLeagueData.isInLeague ? (
+                    <div className="bg-gray-950/80 border border-white/10 p-3.5 rounded-2xl flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                          Pote no Bolão
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/30">
+                          Time da Liga
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-baseline justify-between">
+                        <span className="text-xs text-gray-400">Saldo Atual:</span>
+                        <span className="text-yellow-400 font-black text-xl">
+                          R$ {singleLeagueData.pot.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-950/80 border border-white/10 p-3.5 rounded-2xl flex-1 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                        No Bolão NFL Bets
+                      </span>
+                      <span className="text-[11px] text-gray-500 font-semibold">
+                        Fora dos 16 da liga
                       </span>
                     </div>
-                  </div>
+                  )}
 
                   {onGoToNewBet && (
                     <button
