@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useBet } from "../../context/BetContext";
+import { useAuth } from "../../context/AuthContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 
 const PRESET_ODDS = ["1.30", "1.40", "1.50", "1.75", "2.00"];
@@ -31,6 +32,8 @@ export default function Settings() {
     cloudError,
     leagueId,
   } = useBet();
+
+  const { isAdmin, isAuthenticated, setShowLoginModal } = useAuth();
 
   const [oddInput, setOddInput] = useState(maxOdd ? maxOdd.toString() : "1.5");
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
@@ -1004,13 +1007,19 @@ export default function Settings() {
                     <span>🔄</span>
                     <span>Resetar Todo o Bolão</span>
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowResetConfirm(true)}
-                    className="px-3.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 font-bold text-xs transition-all whitespace-nowrap shadow-sm"
-                  >
-                    Resetar Dados
-                  </button>
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowResetConfirm(true)}
+                      className="px-3.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 font-bold text-xs transition-all whitespace-nowrap shadow-sm active:scale-95"
+                    >
+                      Resetar Dados
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-gray-500 italic bg-gray-950 px-2.5 py-1 rounded-lg border border-gray-800">
+                      🔒 Somente Comissário
+                    </span>
+                  )}
                 </div>
                 <p className="text-gray-500 text-xs">
                   Apaga todos os dados e volta para a tela de escolha dos 16 times.

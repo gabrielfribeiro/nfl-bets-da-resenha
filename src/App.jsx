@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BetProvider, useBet } from "./context/BetContext";
+import { AuthProvider } from "./context/AuthContext";
 import TeamSelector from "./components/Setup/TeamSelector";
 import Dashboard from "./components/Dashboard/Dashboard";
 import NewBet from "./components/Bet/NewBet";
@@ -8,6 +9,7 @@ import Achievements from "./components/Achievements/Achievements";
 import Navbar from "./components/Shared/Navbar";
 import Settings from "./components/Shared/Settings";
 import BroadcastTicker from "./components/Shared/BroadcastTicker";
+import LoginModal from "./components/Auth/LoginModal";
 
 import GamesLive from "./components/Games/GamesLive";
 import ShareModal from "./components/Dashboard/ShareModal";
@@ -24,7 +26,12 @@ function AppContent() {
   };
 
   if (!setupComplete) {
-    return <TeamSelector />;
+    return (
+      <>
+        <TeamSelector />
+        <LoginModal />
+      </>
+    );
   }
 
   return (
@@ -48,6 +55,7 @@ function AppContent() {
         {activeTab === "settings" && <Settings />}
       </main>
       {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
+      <LoginModal />
       <BroadcastTicker />
     </div>
   );
@@ -55,8 +63,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BetProvider>
-      <AppContent />
-    </BetProvider>
+    <AuthProvider>
+      <BetProvider>
+        <AppContent />
+      </BetProvider>
+    </AuthProvider>
   );
 }

@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useBet } from "../../context/BetContext";
+import { useAuth } from "../../context/AuthContext";
 import { NFL_TEAMS, getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { sounds } from "../../utils/sound";
 import MatchupModal from "./MatchupModal";
 
 export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
   const { selectedTeamIds, teams, bets, addBet, currentRound, getMinBet, MAX_ODD, powerUps, powerUpsList } = useBet();
+  const { isAuthenticated, setShowLoginModal } = useAuth();
 
   const [teamAId, setTeamAId] = useState(initialMatchup?.teamA || "");
   const [teamBId, setTeamBId] = useState(initialMatchup?.teamB || "");
@@ -82,6 +84,10 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     if (!isValid) return;
     addBet({
       teamAId,
@@ -174,6 +180,25 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
           </div>
         )}
       </div>
+
+      {/* Visitor Banner */}
+      {!isAuthenticated && (
+        <div className="mb-4 p-4 rounded-2xl bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-yellow-300">
+            <span className="text-base">🔒</span>
+            <span>
+              Você está navegando como <strong>visitante</strong>. Faça login para registrar suas apostas na resenha!
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowLoginModal(true)}
+            className="px-3.5 py-1.5 bg-yellow-400 text-gray-950 font-black rounded-xl text-xs hover:bg-yellow-300 transition-colors flex-shrink-0 shadow-sm"
+          >
+            Fazer Login
+          </button>
+        </div>
+      )}
 
       {/* Main 2-Column Responsive Board Layout */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
