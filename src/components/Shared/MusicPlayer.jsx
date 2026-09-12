@@ -32,6 +32,12 @@ export default function MusicPlayer() {
   isPlayingRef.current = isPlaying;
   const menuRef = useRef(null);
 
+  const playlistRef = useRef(playlist);
+  playlistRef.current = playlist;
+
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
+
   // Busca lista de músicas da pasta public/audio
   const fetchPlaylist = useCallback(async () => {
     try {
@@ -79,12 +85,22 @@ export default function MusicPlayer() {
     audio.volume = isMuted ? 0 : volume;
     audioRef.current = audio;
 
-    // Quando a música termina, toca a próxima automaticamente
+    // Quando a música termina, avança para a próxima da lista em loop infinito
     const handleEnded = () => {
-      setCurrentIndex((prev) => {
-        const next = (prev + 1) % playlist.length;
-        return next;
-      });
+      const list = playlistRef.current;
+      if (!list || list.length === 0) return;
+
+      if (list.length === 1) {
+        // Se só tiver 1 música, reinicia e continua tocando em loop
+        audio.currentTime = 0;
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+        return;
+      }
+
+      // Se tiver mais de 1, avança para a próxima faixa (e volta ao início ao chegar no fim)
+      const next = (currentIndexRef.current + 1) % list.length;
+      userPausedRef.current = false;
+      setCurrentIndex(next);
     };
 
     audio.addEventListener("ended", handleEnded);
