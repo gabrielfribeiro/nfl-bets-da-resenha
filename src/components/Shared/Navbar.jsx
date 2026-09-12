@@ -12,7 +12,16 @@ const TABS = [
 ];
 
 export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
-  const { currentRound, bets, syncWithNflWeek, isSyncingNflWeek, totalPot, liveGamesCount } = useBet();
+  const {
+    currentRound,
+    bets,
+    syncWithNflWeek,
+    isSyncingNflWeek,
+    totalPot,
+    liveGamesCount,
+    isCloudEnabled,
+    cloudSyncStatus,
+  } = useBet();
   const [isMuted, setIsMuted] = useState(sounds.muted);
   const pendingBets = bets.filter((b) => b.result === "pending");
   const pendingCount = pendingBets.length;
@@ -62,6 +71,38 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                 {isSyncingNflWeek ? "⏳" : "🏈"}
               </span>
               <span>Semana #{currentRound}</span>
+            </button>
+
+            {/* Cloud Status Badge */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("settings")}
+              title={
+                isCloudEnabled
+                  ? cloudSyncStatus === "saving"
+                    ? "Salvando na nuvem..."
+                    : "Conectado ao Firebase Firestore (Tempo Real)"
+                  : "Modo Local (Offline). Clique para configurar o Firebase."
+              }
+              className={`h-11 px-3 rounded-xl border text-xs font-black flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
+                isCloudEnabled
+                  ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                  : "bg-gray-900/80 hover:bg-gray-800 text-gray-400 hover:text-yellow-400 border-gray-800"
+              }`}
+            >
+              {isCloudEnabled ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="hidden md:inline">
+                    {cloudSyncStatus === "saving" ? "Salvando..." : "Nuvem"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>☁️</span>
+                  <span className="hidden md:inline">Local</span>
+                </>
+              )}
             </button>
           </div>
 
