@@ -46,9 +46,9 @@ export default function GameBoxscoreModal({ isOpen, onClose, eventId, initialSum
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-gray-900 border border-gray-700 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        {/* Modal Header: Matchup & Score */}
-        <div className="p-4 sm:p-5 border-b border-gray-800 bg-gradient-to-r from-gray-950 via-gray-900 to-gray-950 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+        {/* Modal Header: Matchup & Score Centered */}
+        <div className="relative p-4 sm:p-5 border-b border-gray-800 bg-gradient-to-r from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap sm:flex-nowrap px-8">
             {/* Away Team */}
             <div className="flex items-center gap-2">
               <img
@@ -57,7 +57,7 @@ export default function GameBoxscoreModal({ isOpen, onClose, eventId, initialSum
                 className="w-10 h-10 object-contain drop-shadow"
                 onError={(e) => { e.target.style.display = "none"; }}
               />
-              <div>
+              <div className="text-left">
                 <span className="text-white font-black text-xs sm:text-sm block line-clamp-1">
                   {header?.awayTeam?.name || "Visitante"}
                 </span>
@@ -68,8 +68,8 @@ export default function GameBoxscoreModal({ isOpen, onClose, eventId, initialSum
               </span>
             </div>
 
-            <div className="text-center px-2">
-              <span className="text-[10px] uppercase tracking-wider font-extrabold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full border border-yellow-400/20">
+            <div className="text-center px-2 flex-shrink-0">
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-yellow-400 bg-yellow-400/10 px-2.5 py-0.5 rounded-full border border-yellow-400/20">
                 {header?.statusDetail || "Final"}
               </span>
               <span className="block text-[10px] text-gray-500 font-bold mt-0.5">VS</span>
@@ -86,7 +86,7 @@ export default function GameBoxscoreModal({ isOpen, onClose, eventId, initialSum
                 className="w-10 h-10 object-contain drop-shadow"
                 onError={(e) => { e.target.style.display = "none"; }}
               />
-              <div>
+              <div className="text-left">
                 <span className="text-white font-black text-xs sm:text-sm block line-clamp-1">
                   {header?.homeTeam?.name || "Mandante"}
                 </span>
@@ -97,7 +97,8 @@ export default function GameBoxscoreModal({ isOpen, onClose, eventId, initialSum
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white flex items-center justify-center font-bold text-sm transition-colors flex-shrink-0 ml-2"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white flex items-center justify-center font-bold text-sm transition-colors flex-shrink-0"
+            title="Fechar"
           >
             ✕
           </button>
