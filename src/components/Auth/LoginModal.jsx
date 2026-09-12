@@ -1,8 +1,17 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
-export default function LoginModal() {
-  const { showLoginModal, setShowLoginModal, login, loginGoogle, register, authError, setAuthError } = useAuth();
+export default function LoginModal({ forceOpen = false }) {
+  const {
+    showLoginModal,
+    setShowLoginModal,
+    isAuthenticated,
+    login,
+    loginGoogle,
+    register,
+    authError,
+    setAuthError,
+  } = useAuth();
   const [tab, setTab] = useState("login"); // 'login' | 'register'
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -10,7 +19,8 @@ export default function LoginModal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  if (!showLoginModal) return null;
+  const isVisible = forceOpen || showLoginModal;
+  if (!isVisible) return null;
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
@@ -40,7 +50,7 @@ export default function LoginModal() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
       <div className="bg-gray-900 border border-white/10 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -51,20 +61,22 @@ export default function LoginModal() {
             <div>
               <h3 className="text-white font-black text-lg leading-tight">NFL Bets da Resenha</h3>
               <p className="text-gray-400 text-xs font-semibold">
-                {tab === "login" ? "Acesse sua conta para apostar" : "Crie sua conta para participar"}
+                {tab === "login" ? "Acesse sua conta para entrar no bolão" : "Crie sua conta para participar"}
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setAuthError(null);
-              setShowLoginModal(false);
-            }}
-            className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white flex items-center justify-center text-sm font-bold transition-colors"
-          >
-            ✕
-          </button>
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() => {
+                setAuthError(null);
+                setShowLoginModal(false);
+              }}
+              className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white flex items-center justify-center text-sm font-bold transition-colors"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Google Sign-in Button */}
@@ -207,20 +219,6 @@ export default function LoginModal() {
             )}
           </button>
         </form>
-
-        {/* Guest fallback button */}
-        <div className="pt-2 border-t border-gray-800/80 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setAuthError(null);
-              setShowLoginModal(false);
-            }}
-            className="text-xs text-gray-500 hover:text-gray-300 font-bold transition-colors"
-          >
-            Continuar como Visitante (Modo Leitura) →
-          </button>
-        </div>
       </div>
     </div>
   );
