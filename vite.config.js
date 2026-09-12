@@ -65,17 +65,15 @@ function audioScannerPlugin() {
       scanAndWritePlaylist()
     },
     configureServer(server) {
+      // Gera na inicialização
       scanAndWritePlaylist()
-      server.watcher.add(audioDir)
-      server.watcher.on('all', (event, filePath) => {
-        if (filePath.startsWith(audioDir) && /\.(mp3|wav|ogg|m4a)$/i.test(filePath)) {
-          const updated = scanAndWritePlaylist()
-          server.ws.send({
-            type: 'custom',
-            event: 'audio-playlist-updated',
-            data: updated,
-          })
-        }
+
+      // Endpoint dinâmico que sempre re-escaneia ao ser consultado
+      server.middlewares.use('/api/playlist', (req, res) => {
+        const playlist = scanAndWritePlaylist()
+        res.setHeader('Content-Type', 'application/json')
+        res.setHeader('Cache-Control', 'no-cache')
+        res.end(JSON.stringify(playlist))
       })
     },
   }

@@ -35,7 +35,10 @@ export default function MusicPlayer() {
   // Busca lista de músicas da pasta public/audio
   const fetchPlaylist = useCallback(async () => {
     try {
-      const res = await fetch(`/audio/playlist.json?t=${Date.now()}`);
+      let res = await fetch(`/api/playlist?t=${Date.now()}`);
+      if (!res.ok) {
+        res = await fetch(`/audio/playlist.json?t=${Date.now()}`);
+      }
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
