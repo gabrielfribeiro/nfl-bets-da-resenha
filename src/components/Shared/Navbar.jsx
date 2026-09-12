@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth, ADMIN_EMAILS } from "../../context/AuthContext";
 import { sounds } from "../../utils/sound";
+import MusicPlayer from "./MusicPlayer";
 
 export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
   const {
@@ -237,6 +238,9 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               <span className="text-base">➕</span>
               <span>Apostar</span>
             </button>
+
+            {/* Music Player: Pagode da Resenha */}
+            <MusicPlayer />
 
             {/* Sound Toggle Button */}
             <button
