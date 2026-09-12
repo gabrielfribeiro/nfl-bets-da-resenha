@@ -668,3 +668,191 @@ export async function fetchTeamStats(teamAbbr) {
     return null;
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GAME SUMMARY (ESPN PREDICTOR, ODDS/SPREADS, BOXSCORE DE JOGADORES)
+// ─────────────────────────────────────────────────────────────────────────────
+const GAME_SUMMARY_CACHE = new Map();
+const TEAM_NEWS_CACHE = new Map();
+
+/**
+ * Busca o resumo do jogo (ESPN Predictor, Odds/Spreads e Boxscore de Jogadores)
+ * @param {string|number} eventId - ID do jogo na ESPN (ex: '401872931')
+ */
+export async function fetchGameSummary(eventId) {
+  if (!eventId) return null;
+  const now = Date.now();
+  if (GAME_SUMMARY_CACHE.has(eventId)) {
+    const cached = GAME_SUMMARY_CACHE.get(eventId);
+    if (now - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data;
+    }
+  }
+
+  try {
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${eventId}`);
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    const data = await res.json();
+
+    // 1. Predictor (% de chance de vitória FPI)
+    let predictor = null;
+    if (data.predictor) {
+      const homeProj = parseFloat(data.predictor.homeTeam?.gameProjection) || 0;
+      const awayProj = parseFloat(data.predictor.awayTeam?.gameProjection) || 0;
+      predictor = {
+        homeTeamId: data.predictor.homeTeam?.id,
+        awayTeamId: data.predictor.awayTeam?.id,
+        homeChance: homeProj,
+        awayChance: awayProj,
+        header: data.predictor.header || "Previsão ESPN (FPI)",
+      };
+    }
+
+    // 2. Odds / Pickcenter (Spread, Over/Under, Moneyline)
+    let odds = null;
+    const pick = data.pickcenter?.[0] || data.odds?.[0];
+    if (pick) {
+      odds = {
+        provider: pick.provider?.name || "ESPN BET / DraftKings",
+        details: pick.details || "", // ex: 'KC -2.5'
+        spread: pick.spread ?? null,
+        overUnder: pick.overUnder ?? null,
+        overOdds: pick.overOdds ?? null,
+        underOdds: pick.underOdds ?? null,
+        awayMoneyLine: pick.awayTeamOdds?.moneyLine ?? null,
+        homeMoneyLine: pick.homeTeamOdds?.moneyLine ?? null,
+        awaySpreadOdds: pick.awayTeamOdds?.spreadOdds ?? null,
+        homeSpreadOdds: pick.homeTeamOdds?.spreadOdds ?? null,
+      };
+    }
+
+    // 3. Boxscore de Atletas
+    const boxscorePlayers = (data.boxscore?.players || []).map((teamBox) => {
+      const appTeam = mapEspnTeamToAppTeam(teamBox.team);
+      const categories = (teamBox.statistics || []).map((cat) => {
+        const labels = cat.labels || [];
+        const athletes = (cat.athletes || []).map((athItem) => {
+          const athlete = athItem.athlete || {};
+          return {
+            id: athlete.id,
+            name: athlete.displayName || athlete.fullName || "Atleta",
+            shortName: athlete.shortName || athlete.displayName,
+            jersey: athlete.jersey || "",
+            position: athlete.position?.abbreviation || "",
+            headshot: athlete.headshot?.href || `https://a.espncdn.com/i/headshots/nfl/players/full/${athlete.id}.png`,
+            stats: athItem.stats || [],
+          };
+        });
+
+        return {
+          name: cat.name,
+          displayName:
+            cat.name === "passing"
+              ? "Passadores (QB)"
+              : cat.name === "rushing"
+              ? "Corredores (RB)"
+              : cat.name === "receiving"
+              ? "Recebedores (WR/TE)"
+              : cat.name === "defensive"
+              ? "Defesa"
+              : cat.name === "kicking"
+              ? "Chutadores (K)"
+              : cat.name === "punting"
+              ? "Punters"
+              : cat.name,
+          labels,
+          athletes,
+        };
+      });
+
+      return {
+        team: appTeam,
+        teamName: teamBox.team?.displayName || appTeam?.name,
+        categories,
+      };
+    });
+
+    // 4. Header & Placares do jogo
+    const comp = data.header?.competitions?.[0];
+    const homeComp = comp?.competitors?.find((c) => c.homeAway === "home");
+    const awayComp = comp?.competitors?.find((c) => c.homeAway === "away");
+
+    const header = {
+      name: data.header?.gameNote || comp?.headline || "",
+      statusDetail: comp?.status?.type?.detail || comp?.status?.type?.shortDetail || "",
+      isCompleted: comp?.status?.type?.completed || false,
+      homeTeam: {
+        ...mapEspnTeamToAppTeam(homeComp?.team),
+        score: homeComp?.score || "0",
+        winner: homeComp?.winner || false,
+      },
+      awayTeam: {
+        ...mapEspnTeamToAppTeam(awayComp?.team),
+        score: awayComp?.score || "0",
+        winner: awayComp?.winner || false,
+      },
+    };
+
+    const result = {
+      id: eventId,
+      header,
+      predictor,
+      odds,
+      boxscore: boxscorePlayers,
+    };
+
+    GAME_SUMMARY_CACHE.set(eventId, { data: result, timestamp: now });
+    return result;
+  } catch (err) {
+    console.error(`Erro ao buscar resumo do jogo ${eventId}:`, err);
+    return null;
+  }
+}
+
+/**
+ * Busca notícias recentes de uma franquia na ESPN
+ * @param {string} teamAbbr - sigla do time (ex: 'kc', 'phi')
+ */
+export async function fetchTeamNews(teamAbbr) {
+  if (!teamAbbr) return [];
+  const rawId = teamAbbr.toLowerCase();
+  const espnSlug = rawId === "was" ? "wsh" : rawId;
+  const now = Date.now();
+
+  if (TEAM_NEWS_CACHE.has(espnSlug)) {
+    const cached = TEAM_NEWS_CACHE.get(espnSlug);
+    if (now - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data;
+    }
+  }
+
+  try {
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?team=${espnSlug}`);
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    const data = await res.json();
+    const articles = (data.articles || []).map((art, idx) => {
+      const publishedFormatted = formatToBrasiliaTime(art.published);
+      const imageUrl =
+        art.images?.[0]?.url ||
+        art.images?.[0]?.href ||
+        `https://a.espncdn.com/i/teamlogos/nfl/500/${espnSlug}.png`;
+
+      return {
+        id: art.id || `news-${espnSlug}-${idx}`,
+        headline: art.headline || "Notícia da NFL",
+        description: art.description || "",
+        published: art.published,
+        publishedFormatted,
+        byline: art.byline || "ESPN",
+        link: art.links?.web?.href || `https://www.espn.com/nfl/team/_/name/${espnSlug}`,
+        imageUrl,
+      };
+    });
+
+    TEAM_NEWS_CACHE.set(espnSlug, { data: articles, timestamp: now });
+    return articles;
+  } catch (err) {
+    console.error(`Erro ao buscar notícias do time ${teamAbbr}:`, err);
+    return [];
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { NFL_TEAMS, getTeamById, getLogoUrl } from "../../data/nflTeams";
@@ -8,7 +8,10 @@ import {
   fetchTeamSchedule,
   fetchTeamLeaders,
   fetchNflScoreboard,
+  fetchGameSummary,
+  fetchTeamNews,
 } from "../../services/espnApi";
+import GameBoxscoreModal from "./GameBoxscoreModal";
 
 export default function TeamStats({
   initialTeamA,
@@ -23,6 +26,8 @@ export default function TeamStats({
     () => (Array.isArray(selectedTeamIds) ? selectedTeamIds : []),
     [selectedTeamIds]
   );
+
+  const userManuallyChangedRef = useRef(false);
 
   // Mode: 'h2h' (Confronto) | 'single' (Raio-X Individual)
   const [mode, setMode] = useState(initialTeamA && initialTeamB ? "h2h" : "h2h");
@@ -54,6 +59,14 @@ export default function TeamStats({
   const [currentWeekGames, setCurrentWeekGames] = useState([]);
   const [isLoadingGames, setIsLoadingGames] = useState(false);
 
+  // Novos estados: Summary do H2H (Predictor + Odds), Boxscore Modal e Notícias
+  const [h2hSummary, setH2hSummary] = useState(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [boxscoreEventId, setBoxscoreEventId] = useState(null);
+  const [isBoxscoreOpen, setIsBoxscoreOpen] = useState(false);
+  const [teamNewsMap, setTeamNewsMap] = useState({});
+  const [isLoadingNews, setIsLoadingNews] = useState(false);
+
   // Load standings on mount
   useEffect(() => {
     let isMounted = true;
@@ -84,6 +97,110 @@ export default function TeamStats({
       isMounted = false;
     };
   }, [currentRound]);
+
+  // 1. Caso venha pela tela de jogos (ou se as props mudarem), traz carregado o confronto que foi clicado
+  useEffect(() => {
+    if (initialTeamA && initialTeamB) {
+      setTeamAId(initialTeamA);
+      setTeamBId(initialTeamB);
+      setSingleTeamId(initialTeamA);
+      setMode("h2h");
+      userManuallyChangedRef.current = false;
+    }
+  }, [initialTeamA, initialTeamB]);
+
+  // 2. Quando somente abrir (sem confronto pré-selecionado), traz carregado um confronto real da rodada
+  useEffect(() => {
+    if (initialTeamA && initialTeamB) return;
+    if (userManuallyChangedRef.current) return;
+
+    if (currentWeekGames && currentWeekGames.length > 0) {
+      // Prioridade 1: Confronto que envolva time(s) do nosso bolão
+      const leagueGame = currentWeekGames.find(
+        (g) =>
+          (g.awayTeam?.id && safeSelectedIds.includes(g.awayTeam.id)) ||
+          (g.homeTeam?.id && safeSelectedIds.includes(g.homeTeam.id))
+      );
+
+      // Prioridade 2: Primeiro confronto da rodada
+      const targetGame = leagueGame || currentWeekGames[0];
+      if (targetGame?.awayTeam?.id && targetGame?.homeTeam?.id) {
+        setTeamAId(targetGame.awayTeam.id);
+        setTeamBId(targetGame.homeTeam.id);
+        setSingleTeamId(targetGame.awayTeam.id);
+        setMode("h2h");
+      }
+    }
+  }, [currentWeekGames, initialTeamA, initialTeamB, safeSelectedIds]);
+
+  // Load H2H match summary (ESPN Predictor, Odds e Boxscore) quando os dois times duelam
+  useEffect(() => {
+    let isMounted = true;
+    if (mode !== "h2h" || !teamAId || !teamBId) {
+      setH2hSummary(null);
+      return;
+    }
+
+    // 1. Procura na semana atual
+    let matchGame = currentWeekGames.find(
+      (g) =>
+        (g.awayTeam?.id === teamAId && g.homeTeam?.id === teamBId) ||
+        (g.awayTeam?.id === teamBId && g.homeTeam?.id === teamAId)
+    );
+
+    // 2. Se não achou na semana atual, procura no calendário do Team A
+    if (!matchGame && schedulesMap[teamAId]) {
+      const allTeamAGames = [
+        ...(schedulesMap[teamAId].upcomingGames || []),
+        ...(schedulesMap[teamAId].recentGames || []),
+      ];
+      matchGame = allTeamAGames.find((g) => g.opponent?.id === teamBId);
+    }
+
+    const eventId = matchGame?.id;
+    if (eventId) {
+      setIsLoadingSummary(true);
+      fetchGameSummary(eventId)
+        .then((data) => {
+          if (isMounted) setH2hSummary(data);
+        })
+        .finally(() => {
+          if (isMounted) setIsLoadingSummary(false);
+        });
+    } else {
+      setH2hSummary(null);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [mode, teamAId, teamBId, currentWeekGames, schedulesMap]);
+
+  // Load team news quando a aba de notícias estiver ativa
+  useEffect(() => {
+    if (mode === "single" && singleTab === "news" && singleTeamId) {
+      if (teamNewsMap[singleTeamId]) return;
+      let isMounted = true;
+      setIsLoadingNews(true);
+      fetchTeamNews(singleTeamId)
+        .then((articles) => {
+          if (isMounted) {
+            setTeamNewsMap((prev) => ({ ...prev, [singleTeamId]: articles }));
+          }
+        })
+        .finally(() => {
+          if (isMounted) setIsLoadingNews(false);
+        });
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [mode, singleTab, singleTeamId, teamNewsMap]);
+
+  const handleOpenBoxscore = (eventId) => {
+    setBoxscoreEventId(eventId);
+    setIsBoxscoreOpen(true);
+  };
 
   // Load stats for selected teams
   useEffect(() => {
@@ -269,6 +386,55 @@ export default function TeamStats({
     );
   }, [bets, teamAId, teamBId, currentRound]);
 
+  // ESPN Matchup Predictor & Odds Projection
+  const predictorData = useMemo(() => {
+    if (h2hSummary?.predictor) {
+      const isHomeA =
+        h2hSummary.header?.homeTeam?.id === teamAId ||
+        h2hSummary.predictor?.homeTeamId === teamAId;
+      const rawProbA = isHomeA
+        ? h2hSummary.predictor.homeChance
+        : h2hSummary.predictor.awayChance;
+
+      const probA = Math.round(Number(rawProbA) || 50);
+      const probB = 100 - probA;
+
+      return {
+        isOfficial: true,
+        header: "ESPN Matchup Predictor (FPI Oficial)",
+        probA,
+        probB,
+        odds: h2hSummary.odds,
+        summary: h2hSummary,
+      };
+    }
+
+    if (statsA && statsB) {
+      // Projeção teórica com base no ataque e defesa de cada equipe
+      const ppgA = statsA.offense.pointsPerGame || 20;
+      const papgB = statsB.defense.pointsAllowedPerGame || 22;
+      const ppgB = statsB.offense.pointsPerGame || 20;
+      const papgA = statsA.defense.pointsAllowedPerGame || 22;
+
+      const expA = (ppgA + papgB) / 2;
+      const expB = (ppgB + papgA) / 2;
+      const total = expA + expB || 1;
+      const probA = Math.max(10, Math.min(90, Math.round((expA / total) * 100)));
+      const probB = 100 - probA;
+
+      return {
+        isOfficial: false,
+        header: "Projeção Estatística Baseada em Métricas",
+        probA,
+        probB,
+        odds: h2hSummary?.odds || null,
+        summary: h2hSummary,
+      };
+    }
+
+    return null;
+  }, [h2hSummary, statsA, statsB, teamAId]);
+
   // Matchup Advantage Calculator
   const matchupScore = useMemo(() => {
     if (!statsA || !statsB) return { aWins: 0, bWins: 0, total: 0 };
@@ -418,6 +584,7 @@ export default function TeamStats({
                         key={game.id}
                         type="button"
                         onClick={() => {
+                          userManuallyChangedRef.current = true;
                           setTeamAId(game.awayTeam.id);
                           setTeamBId(game.homeTeam.id);
                         }}
@@ -465,7 +632,10 @@ export default function TeamStats({
                 </label>
                 <select
                   value={teamAId}
-                  onChange={(e) => setTeamAId(e.target.value)}
+                  onChange={(e) => {
+                    userManuallyChangedRef.current = true;
+                    setTeamAId(e.target.value);
+                  }}
                   className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-black text-white focus:outline-none focus:border-yellow-400 transition-colors"
                 >
                   <optgroup label="Times no Bolão">
@@ -501,7 +671,10 @@ export default function TeamStats({
                 </label>
                 <select
                   value={teamBId}
-                  onChange={(e) => setTeamBId(e.target.value)}
+                  onChange={(e) => {
+                    userManuallyChangedRef.current = true;
+                    setTeamBId(e.target.value);
+                  }}
                   className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-black text-white focus:outline-none focus:border-yellow-400 transition-colors"
                 >
                   <optgroup label="Times no Bolão">
@@ -681,6 +854,129 @@ export default function TeamStats({
               </div>
             </div>
 
+            {/* ESPN MATCHUP PREDICTOR & LINHAS DE MERCADO (ODDS / SPREAD / OU) */}
+            {predictorData && (
+              <div className="bg-gradient-to-r from-gray-900 via-gray-950 to-gray-900 border border-gray-800 rounded-3xl p-5 shadow-xl space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">🤖</span>
+                    <div>
+                      <h3 className="text-white font-black text-sm uppercase tracking-wide flex items-center gap-2">
+                        <span>{predictorData.header}</span>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          predictorData.isOfficial
+                            ? "bg-yellow-400 text-gray-950"
+                            : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                        }`}>
+                          {predictorData.isOfficial ? "★ FPI Oficial ESPN" : "Projeção por Métricas"}
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-gray-400">
+                        {predictorData.isOfficial
+                          ? "Probabilidade matemática calculada pelo supercomputador Football Power Index da ESPN"
+                          : "Calculado com base na média de pontos feitos e cedidos por cada equipe"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Badges de Spread e Over/Under */}
+                  {predictorData.odds && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {predictorData.odds.details && (
+                        <span className="text-xs bg-yellow-400/15 border border-yellow-400/30 text-yellow-400 font-black px-3 py-1 rounded-xl shadow-sm">
+                          Spread: {predictorData.odds.details}
+                        </span>
+                      )}
+                      {predictorData.odds.overUnder && (
+                        <span className="text-xs bg-sky-500/15 border border-sky-500/30 text-sky-300 font-black px-3 py-1 rounded-xl shadow-sm">
+                          O/U {predictorData.odds.overUnder} pts
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Barra de Probabilidade de Vitória */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex justify-between items-center text-xs font-black">
+                    <span style={{ color: teamA.color }} className="flex items-center gap-1.5">
+                      <span>{teamA.name}</span>
+                      <span className="text-white bg-gray-900 px-2 py-0.5 rounded-lg border border-gray-800">
+                        {predictorData.probA}%
+                      </span>
+                    </span>
+                    <span style={{ color: teamB.color }} className="flex items-center gap-1.5">
+                      <span className="text-white bg-gray-900 px-2 py-0.5 rounded-lg border border-gray-800">
+                        {predictorData.probB}%
+                      </span>
+                      <span>{teamB.name}</span>
+                    </span>
+                  </div>
+
+                  <div className="w-full h-4 bg-gray-950 rounded-full overflow-hidden flex p-0.5 border border-gray-800">
+                    <div
+                      className="h-full rounded-l-full transition-all duration-700 relative"
+                      style={{
+                        width: `${predictorData.probA}%`,
+                        backgroundColor: teamA.color,
+                      }}
+                    />
+                    <div
+                      className="h-full rounded-r-full transition-all duration-700 relative"
+                      style={{
+                        width: `${predictorData.probB}%`,
+                        backgroundColor: teamB.color,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Detalhes de Mercado (Spread, Over/Under, Moneyline) */}
+                {predictorData.odds && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-gray-800/80 text-xs">
+                    <div className="bg-gray-950/80 p-3 rounded-2xl border border-gray-800/80">
+                      <span className="text-gray-400 text-[10px] font-bold uppercase block mb-0.5">
+                        Margem (Spread / Handicap)
+                      </span>
+                      <span className="text-yellow-400 font-black text-sm">
+                        {predictorData.odds.details || "A definir"}
+                      </span>
+                    </div>
+
+                    <div className="bg-gray-950/80 p-3 rounded-2xl border border-gray-800/80">
+                      <span className="text-gray-400 text-[10px] font-bold uppercase block mb-0.5">
+                        Total de Pontos (Over / Under)
+                      </span>
+                      <span className="text-sky-300 font-black text-sm">
+                        {predictorData.odds.overUnder ? `${predictorData.odds.overUnder} pontos` : "A definir"}
+                      </span>
+                    </div>
+
+                    <div className="bg-gray-950/80 p-3 rounded-2xl border border-gray-800/80 flex items-center justify-between">
+                      <div>
+                        <span className="text-gray-400 text-[10px] font-bold uppercase block mb-0.5">
+                          Provedor Oficial
+                        </span>
+                        <span className="text-white font-black text-xs">
+                          {predictorData.odds.provider || "ESPN BET / DraftKings"}
+                        </span>
+                      </div>
+                      {predictorData.summary?.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenBoxscore(predictorData.summary.id)}
+                          className="px-2.5 py-1.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-[11px] transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+                        >
+                          <span>📊</span>
+                          <span>Súmula</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* STATS COMPARISON BARS */}
             {isLoadingStats ? (
               <div className="bg-gray-900/60 p-8 rounded-3xl text-center">
@@ -852,9 +1148,19 @@ export default function TeamStats({
                                 {game.opponent.abbr}
                               </span>
                             </div>
-                            <span className="font-black text-yellow-400">
-                              {game.score}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-yellow-400">
+                                {game.score}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenBoxscore(game.id)}
+                                title="Ver Boxscore e estatísticas individuais deste jogo"
+                                className="px-2 py-0.5 rounded-lg bg-gray-800 hover:bg-yellow-400 hover:text-gray-950 text-gray-300 text-[10px] font-bold transition-all cursor-pointer"
+                              >
+                                📊 Boxscore
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -902,9 +1208,19 @@ export default function TeamStats({
                                 {game.opponent.abbr}
                               </span>
                             </div>
-                            <span className="font-black text-yellow-400">
-                              {game.score}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-yellow-400">
+                                {game.score}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenBoxscore(game.id)}
+                                title="Ver Boxscore e estatísticas individuais deste jogo"
+                                className="px-2 py-0.5 rounded-lg bg-gray-800 hover:bg-yellow-400 hover:text-gray-950 text-gray-300 text-[10px] font-bold transition-all cursor-pointer"
+                              >
+                                📊 Boxscore
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1334,7 +1650,7 @@ export default function TeamStats({
                           alt=""
                           className="w-7 h-7 object-contain flex-shrink-0"
                         />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs font-black text-white truncate">
                             {game.isHome ? "vs" : "@"} {game.opponent.name}
                           </p>
@@ -1343,19 +1659,30 @@ export default function TeamStats({
                           </p>
                         </div>
                       </div>
+
+                      {/* Botão de Boxscore */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenBoxscore(game.id)}
+                        className="w-full py-1.5 bg-gray-900 hover:bg-yellow-400 hover:text-gray-950 border border-gray-800 text-[10px] font-black text-gray-300 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                      >
+                        <span>📊</span>
+                        <span>Ver Súmula e Boxscore</span>
+                      </button>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* TAB NAVIGATION: VISÃO GERAL, ATAQUE, DEFESA, SITUACIONAIS, BOLÃO */}
+            {/* TAB NAVIGATION: VISÃO GERAL, ATAQUE, DEFESA, SITUACIONAIS, NOTÍCIAS, BOLÃO */}
             <div className="flex items-center gap-1.5 overflow-x-auto bg-gray-950/90 p-1.5 rounded-2xl border border-gray-800 scrollbar-thin">
               {[
                 { id: "overview", label: "Visão Geral", icon: "📋" },
                 { id: "offense", label: "Ataque Completo", icon: "🏈" },
                 { id: "defense", label: "Defesa & Pressão", icon: "🛡️" },
                 { id: "situational", label: "Métricas Avançadas", icon: "⏱️" },
+                { id: "news", label: "Notícias & Destaques", icon: "📰" },
                 { id: "bolao", label: "Histórico no Bolão", icon: "💰" },
               ].map((tab) => {
                 const isActive = singleTab === tab.id;
@@ -1681,10 +2008,96 @@ export default function TeamStats({
                     )}
                   </div>
                 )}
+
+                {/* 5. NOTÍCIAS & DESTAQUES DA FRANQUIA */}
+                {singleTab === "news" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-3 flex-wrap gap-2">
+                      <div>
+                        <h4 className="text-sm font-black text-white flex items-center gap-2">
+                          <span>📰</span>
+                          <span>Notícias e Manchetes de {singleTeam.name}</span>
+                        </h4>
+                        <p className="text-xs text-gray-400">
+                          Cobertura oficial em tempo real direto da ESPN americana
+                        </p>
+                      </div>
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-yellow-400/15 text-yellow-400 font-black border border-yellow-400/30 flex items-center gap-1">
+                        <span>⚡</span>
+                        <span>ESPN News Feed</span>
+                      </span>
+                    </div>
+
+                    {isLoadingNews ? (
+                      <div className="py-14 text-center text-gray-500 space-y-2">
+                        <span className="text-3xl animate-spin inline-block">⏳</span>
+                        <p className="text-xs font-bold">Carregando notícias da franquia...</p>
+                      </div>
+                    ) : !teamNewsMap[singleTeamId] || teamNewsMap[singleTeamId].length === 0 ? (
+                      <div className="bg-gray-900/40 border border-gray-800 p-8 rounded-2xl text-center text-gray-500 space-y-2">
+                        <span className="text-3xl block">📰</span>
+                        <p className="text-xs font-bold">Nenhuma notícia recente disponível no momento para esta equipe.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {teamNewsMap[singleTeamId].map((art) => (
+                          <a
+                            key={art.id}
+                            href={art.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gray-900/90 border border-gray-800 hover:border-yellow-400/50 rounded-2xl overflow-hidden flex flex-col justify-between group transition-all shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                          >
+                            <div className="relative h-44 overflow-hidden bg-gray-950">
+                              <img
+                                src={art.imageUrl}
+                                alt={art.headline}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  e.target.src = getLogoUrl(singleTeam, 200);
+                                  e.target.className = "w-24 h-24 object-contain mx-auto mt-10 opacity-70";
+                                }}
+                              />
+                              <div className="absolute top-2 right-2 bg-gray-950/80 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-bold text-gray-300 border border-white/10">
+                                {art.publishedFormatted || "Recente"}
+                              </div>
+                            </div>
+                            <div className="p-4 flex-1 flex flex-col justify-between space-y-2.5">
+                              <div>
+                                <h5 className="text-white font-black text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-yellow-400 transition-colors">
+                                  {art.headline}
+                                </h5>
+                                {art.description && (
+                                  <p className="text-gray-400 text-xs line-clamp-2 mt-1.5 leading-relaxed">
+                                    {art.description}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="pt-2 border-t border-gray-800/80 flex items-center justify-between text-[10px] text-gray-500">
+                                <span>{art.byline}</span>
+                                <span className="text-yellow-400 font-bold group-hover:underline flex items-center gap-1">
+                                  <span>Ler Matéria</span>
+                                  <span>↗</span>
+                                </span>
+                              </div>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
         )}
+
+        {/* Modal de Boxscore / Súmula */}
+        <GameBoxscoreModal
+          isOpen={isBoxscoreOpen}
+          onClose={() => setIsBoxscoreOpen(false)}
+          eventId={boxscoreEventId}
+        />
       </div>
     </div>
   );
