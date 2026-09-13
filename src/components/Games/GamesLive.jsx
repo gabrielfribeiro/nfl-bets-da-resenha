@@ -68,7 +68,9 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
       selectedTeamIds.includes(game.awayTeam?.id);
     const gameBets = getBetsForGame(game);
 
-    if (activeFilter === "MY_BETS") return gameBets.length > 0;
+    if (activeFilter === "MY_BETS") {
+      return gameBets.some((b) => b.result === "pending");
+    }
     if (activeFilter === "LEAGUE") return hasLeagueTeam;
     if (activeFilter === "LIVE") return game.isLive;
     if (activeFilter === "SCHEDULED") return game.isScheduled;
@@ -80,7 +82,6 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
   const leagueGamesCount = games.filter(
     (g) => selectedTeamIds.includes(g.homeTeam?.id) || selectedTeamIds.includes(g.awayTeam?.id)
   ).length;
-  const myBetsGamesCount = games.filter((g) => getBetsForGame(g).length > 0).length;
   const pendingBetsGamesCount = games.filter((g) =>
     getBetsForGame(g).some((b) => b.result === "pending")
   ).length;
@@ -145,7 +146,7 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
           Todos ({games.length})
         </button>
 
-        {myBetsGamesCount > 0 && (
+        {(pendingBetsGamesCount > 0 || activeFilter === "MY_BETS") && (
           <button
             onClick={() => setActiveFilter("MY_BETS")}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -155,14 +156,9 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
             }`}
           >
             <span>🎯 Minhas Apostas</span>
-            <span className="bg-amber-400/20 px-1.5 py-0.2 rounded-full text-[10px]">
-              {myBetsGamesCount}
+            <span className="bg-amber-400/20 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+              {pendingBetsGamesCount}
             </span>
-            {pendingBetsGamesCount > 0 && (
-              <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full animate-pulse">
-                {pendingBetsGamesCount} pendente{pendingBetsGamesCount > 1 ? "s" : ""}
-              </span>
-            )}
           </button>
         )}
 
@@ -255,8 +251,14 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
       {/* Games Grid */}
       {!loading && !error && filteredGames.length === 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 text-center text-gray-400">
-          <span className="text-3xl block mb-2">🔍</span>
-          <p className="font-bold text-sm">Nenhum confronto encontrado para este filtro.</p>
+          <span className="text-3xl block mb-2">
+            {activeFilter === "MY_BETS" ? "🎉" : "🔍"}
+          </span>
+          <p className="font-bold text-sm">
+            {activeFilter === "MY_BETS"
+              ? "Nenhuma aposta pendente nesta semana! Todas as suas apostas já foram resolvidas."
+              : "Nenhum confronto encontrado para este filtro."}
+          </p>
           <button
             onClick={() => setActiveFilter("ALL")}
             className="mt-3 text-xs text-yellow-400 hover:underline font-semibold"
@@ -273,6 +275,10 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
             const isAwayInLeague = selectedTeamIds.includes(game.awayTeam?.id);
             const involvesLeague = isHomeInLeague || isAwayInLeague;
             const gameBets = getBetsForGame(game);
+            const displayedBets =
+              activeFilter === "MY_BETS"
+                ? gameBets.filter((b) => b.result === "pending")
+                : gameBets;
 
             return (
               <div
@@ -414,14 +420,16 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                 </div>
 
                 {/* Bets created for this game */}
-                {gameBets.length > 0 && (
+                {displayedBets.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-800/80 space-y-2">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className="text-[10px] font-black uppercase tracking-wider text-yellow-400 flex items-center gap-1.5">
                         <span>🎯</span>
-                        <span>Sua Aposta neste Jogo ({gameBets.length})</span>
+                        <span>
+                          {activeFilter === "MY_BETS" ? "Aposta Pendente neste Jogo" : "Sua Aposta neste Jogo"} ({displayedBets.length})
+                        </span>
                       </span>
-                      {game.isCompleted && gameBets.some((b) => b.result === "pending") && (
+                      {game.isCompleted && displayedBets.some((b) => b.result === "pending") && (
                         <span className="text-[10px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
                           <span>⚠️</span>
                           <span>Jogo Finalizado · Aguardando Resolução</span>
@@ -429,7 +437,7 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                       )}
                     </div>
 
-                    {gameBets.map((bet) => {
+                    {displayedBets.map((bet) => {
                       const bettingTeam =
                         bet.bettingOnTeamId === game.awayTeam?.id ? game.awayTeam : game.homeTeam;
                       const isWin = bet.result === "win";
