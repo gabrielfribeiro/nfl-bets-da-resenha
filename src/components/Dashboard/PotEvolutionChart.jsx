@@ -230,204 +230,239 @@ export default function PotEvolutionChart({ selectedTeamIds, teams, bets, curren
 
       {/* SVG Chart Container */}
       <div className="relative w-full overflow-hidden bg-gray-950/60 border border-gray-800/80 rounded-2xl p-2 sm:p-4">
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          className="w-full h-auto overflow-visible select-none"
-        >
-          <defs>
-            {/* Glow filters for lines */}
-            <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.4" />
-            </filter>
-          </defs>
-
-          {/* Background Grid Lines (Y-Axis) */}
-          {yTicks.map((val, idx) => {
-            const y = getY(val);
-            return (
-              <g key={idx}>
-                <line
-                  x1={padding.left}
-                  y1={y}
-                  x2={width - padding.right}
-                  y2={y}
-                  stroke="#1f2937"
-                  strokeWidth="1"
-                  strokeDasharray="3 3"
-                />
-                <text
-                  x={padding.left - 8}
-                  y={y + 4}
-                  textAnchor="end"
-                  fill="#6b7280"
-                  fontSize="10"
-                  fontWeight="bold"
-                >
-                  R${val.toFixed(2)}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* Average Line */}
-          <line
-            x1={padding.left}
-            y1={averageY}
-            x2={width - padding.right}
-            y2={averageY}
-            stroke="#eab308"
-            strokeWidth="1.5"
-            strokeDasharray="4 4"
-            opacity="0.6"
-          />
-          <text
-            x={width - padding.right}
-            y={averageY - 5}
-            textAnchor="end"
-            fill="#eab308"
-            fontSize="9"
-            fontWeight="bold"
-            opacity="0.8"
+        <div className="relative w-full">
+          <svg
+            viewBox={`0 0 ${width} ${height}`}
+            className="w-full h-auto overflow-visible select-none"
           >
-            MÉDIA DA LIGA: R$ {currentAveragePot.toFixed(2)}
-          </text>
+            <defs>
+              {/* Glow filters for lines */}
+              <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.4" />
+              </filter>
+            </defs>
 
-          {/* Round Lines (X-Axis) */}
-          {roundLabels.map((lbl, idx) => {
-            const x = getX(idx);
-            return (
-              <g key={idx}>
-                <line
-                  x1={x}
-                  y1={padding.top}
-                  x2={x}
-                  y2={height - padding.bottom}
-                  stroke="#1f2937"
-                  strokeWidth="1"
-                  strokeDasharray="2 2"
-                  opacity="0.4"
-                />
-                <text
-                  x={x}
-                  y={height - padding.bottom + 18}
-                  textAnchor="middle"
-                  fill="#9ca3af"
-                  fontSize="11"
-                  fontWeight="bold"
-                >
-                  {lbl.label}
-                </text>
-              </g>
-            );
-          })}
+            {/* Background Grid Lines (Y-Axis) */}
+            {yTicks.map((val, idx) => {
+              const y = getY(val);
+              return (
+                <g key={idx}>
+                  <line
+                    x1={padding.left}
+                    y1={y}
+                    x2={width - padding.right}
+                    y2={y}
+                    stroke="#1f2937"
+                    strokeWidth="1"
+                    strokeDasharray="3 3"
+                  />
+                  <text
+                    x={padding.left - 8}
+                    y={y + 4}
+                    textAnchor="end"
+                    fill="#6b7280"
+                    fontSize="10"
+                    fontWeight="bold"
+                  >
+                    R${val.toFixed(2)}
+                  </text>
+                </g>
+              );
+            })}
 
-          {/* Render Team Paths */}
-          {visibleTeams.map((t) => {
-            const isFocused = focusedTeamId === t.id;
-            const isDimmed = focusedTeamId && !isFocused;
+            {/* Average Line */}
+            <line
+              x1={padding.left}
+              y1={averageY}
+              x2={width - padding.right}
+              y2={averageY}
+              stroke="#eab308"
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
+              opacity="0.6"
+            />
+            <text
+              x={width - padding.right}
+              y={averageY - 5}
+              textAnchor="end"
+              fill="#eab308"
+              fontSize="9"
+              fontWeight="bold"
+              opacity="0.8"
+            >
+              MÉDIA DA LIGA: R$ {currentAveragePot.toFixed(2)}
+            </text>
 
-            // Generate SVG path string
-            const pathString = t.points.reduce((acc, pt, idx) => {
+            {/* Round Lines (X-Axis) */}
+            {roundLabels.map((lbl, idx) => {
               const x = getX(idx);
-              const y = getY(pt.pot);
-              return idx === 0 ? `M ${x} ${y}` : `${acc} L ${x} ${y}`;
-            }, "");
+              return (
+                <g key={idx}>
+                  <line
+                    x1={x}
+                    y1={padding.top}
+                    x2={x}
+                    y2={height - padding.bottom}
+                    stroke="#1f2937"
+                    strokeWidth="1"
+                    strokeDasharray="2 2"
+                    opacity="0.4"
+                  />
+                  <text
+                    x={x}
+                    y={height - padding.bottom + 18}
+                    textAnchor="middle"
+                    fill="#9ca3af"
+                    fontSize="11"
+                    fontWeight="bold"
+                  >
+                    {lbl.label}
+                  </text>
+                </g>
+              );
+            })}
 
-            const strokeColor = t.color || "#eab308";
-            const strokeWidth = isFocused ? 4 : 2.5;
-            const opacity = isDimmed ? 0.15 : isFocused ? 1 : 0.85;
+            {/* Vertical Guide Line on Hover */}
+            {hoveredPoint && (
+              <line
+                x1={hoveredPoint.x}
+                y1={padding.top}
+                x2={hoveredPoint.x}
+                y2={height - padding.bottom}
+                stroke="#eab308"
+                strokeWidth="1"
+                strokeDasharray="3 3"
+                opacity="0.4"
+                pointerEvents="none"
+              />
+            )}
 
-            return (
-              <g key={t.id} className="transition-opacity duration-300">
-                {/* Line glow if focused */}
-                {isFocused && (
+            {/* Render Team Paths */}
+            {visibleTeams.map((t) => {
+              const isFocused = focusedTeamId === t.id;
+              const isDimmed = focusedTeamId && !isFocused;
+
+              // Generate SVG path string
+              const pathString = t.points.reduce((acc, pt, idx) => {
+                const x = getX(idx);
+                const y = getY(pt.pot);
+                return idx === 0 ? `M ${x} ${y}` : `${acc} L ${x} ${y}`;
+              }, "");
+
+              const strokeColor = t.color || "#eab308";
+              const strokeWidth = isFocused ? 4 : 2.5;
+              const opacity = isDimmed ? 0.15 : isFocused ? 1 : 0.85;
+
+              return (
+                <g key={t.id} className="transition-opacity duration-300">
+                  {/* Line glow if focused */}
+                  {isFocused && (
+                    <path
+                      d={pathString}
+                      fill="none"
+                      stroke={strokeColor}
+                      strokeWidth={8}
+                      opacity="0.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+
+                  {/* Main Path */}
                   <path
                     d={pathString}
                     fill="none"
                     stroke={strokeColor}
-                    strokeWidth={8}
-                    opacity="0.25"
+                    strokeWidth={strokeWidth}
+                    opacity={opacity}
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    filter={isFocused ? "url(#lineGlow)" : undefined}
                   />
-                )}
 
-                {/* Main Path */}
-                <path
-                  d={pathString}
-                  fill="none"
-                  stroke={strokeColor}
-                  strokeWidth={strokeWidth}
-                  opacity={opacity}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter={isFocused ? "url(#lineGlow)" : undefined}
+                  {/* Circles at each round point */}
+                  {t.points.map((pt, idx) => {
+                    const cx = getX(idx);
+                    const cy = getY(pt.pot);
+                    const isHovered =
+                      hoveredPoint?.teamId === t.id && hoveredPoint?.round === pt.round;
+
+                    return (
+                      <g key={idx}>
+                        {/* Visible circle - decoupled from mouse events */}
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={isHovered ? 6.5 : isFocused ? 4.5 : 3.5}
+                          fill={isHovered ? "#ffffff" : strokeColor}
+                          stroke={isHovered ? strokeColor : "#030712"}
+                          strokeWidth={isHovered ? 3 : 1.5}
+                          opacity={opacity}
+                          pointerEvents="none"
+                          className="transition-all duration-150"
+                        />
+                        {/* Invisible fixed hit target for stable hover */}
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={16}
+                          fill="transparent"
+                          className="cursor-pointer"
+                          onMouseEnter={() =>
+                            setHoveredPoint({
+                              teamId: t.id,
+                              team: t.team,
+                              round: pt.round,
+                              pot: pt.pot,
+                              x: cx,
+                              y: cy,
+                            })
+                          }
+                          onMouseLeave={() => setHoveredPoint(null)}
+                        />
+                      </g>
+                    );
+                  })}
+                </g>
+              );
+            })}
+          </svg>
+
+          {/* Floating Tooltip */}
+          {hoveredPoint && (
+            <div
+              className="absolute pointer-events-none z-30 bg-gray-900/95 border border-yellow-400/40 rounded-xl p-2.5 shadow-2xl backdrop-blur-md text-xs whitespace-nowrap transition-transform duration-75"
+              style={{
+                left: `${(hoveredPoint.x / width) * 100}%`,
+                top: `${(hoveredPoint.y / height) * 100}%`,
+                transform: `translate(${
+                  hoveredPoint.x > width * 0.75
+                    ? "-100%"
+                    : hoveredPoint.x < width * 0.25
+                    ? "0%"
+                    : "-50%"
+                }, ${hoveredPoint.y < 85 ? "20%" : "-120%"})`,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <img
+                  src={getLogoUrl(hoveredPoint.team, 100)}
+                  alt=""
+                  className="w-5 h-5 object-contain"
                 />
-
-                {/* Circles at each round point */}
-                {t.points.map((pt, idx) => {
-                  const cx = getX(idx);
-                  const cy = getY(pt.pot);
-                  const isHovered =
-                    hoveredPoint?.teamId === t.id && hoveredPoint?.round === pt.round;
-
-                  return (
-                    <circle
-                      key={idx}
-                      cx={cx}
-                      cy={cy}
-                      r={isHovered ? 6 : isFocused ? 4.5 : 3.5}
-                      fill={strokeColor}
-                      stroke="#030712"
-                      strokeWidth={isHovered ? 2.5 : 1.5}
-                      opacity={opacity}
-                      className="cursor-pointer transition-all hover:scale-125"
-                      onMouseEnter={() =>
-                        setHoveredPoint({
-                          teamId: t.id,
-                          team: t.team,
-                          round: pt.round,
-                          pot: pt.pot,
-                          x: cx,
-                          y: cy,
-                        })
-                      }
-                      onMouseLeave={() => setHoveredPoint(null)}
-                    />
-                  );
-                })}
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* Floating Tooltip */}
-        {hoveredPoint && (
-          <div
-            className="absolute pointer-events-none z-30 bg-gray-900/95 border border-yellow-400/40 rounded-xl p-2.5 shadow-2xl backdrop-blur-md transition-all text-xs"
-            style={{
-              left: `${Math.min(hoveredPoint.x + 10, width - 160)}px`,
-              top: `${Math.max(10, hoveredPoint.y - 65)}px`,
-            }}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <img
-                src={getLogoUrl(hoveredPoint.team, 100)}
-                alt=""
-                className="w-5 h-5 object-contain"
-              />
-              <span className="font-black text-white">{hoveredPoint.team?.name}</span>
+                <span className="font-black text-white">{hoveredPoint.team?.name}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-[11px]">
+                <span className="text-gray-400">
+                  {hoveredPoint.round === 0 ? "Início" : `Rodada #${hoveredPoint.round}`}:
+                </span>
+                <span className="text-yellow-400 font-black">
+                  R$ {hoveredPoint.pot.toFixed(2)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center justify-between gap-3 text-[11px]">
-              <span className="text-gray-400">
-                {hoveredPoint.round === 0 ? "Início" : `Rodada #${hoveredPoint.round}`}:
-              </span>
-              <span className="text-yellow-400 font-black">
-                R$ {hoveredPoint.pot.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Highlights Cards below chart */}
