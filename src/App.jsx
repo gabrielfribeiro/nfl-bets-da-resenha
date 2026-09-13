@@ -19,8 +19,8 @@ import TeamStats from "./components/Stats/TeamStats";
 import ShareModal from "./components/Dashboard/ShareModal";
 
 function AppContent() {
-  const { setupComplete } = useBet();
-  const { isAuthenticated, loading, isAdmin } = useAuth();
+  const { setupComplete, isLeagueLoading } = useBet();
+  const { isAuthenticated, loading: authLoading, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [preselectedMatchup, setPreselectedMatchup] = useState(null);
   const [preselectedStatsMatchup, setPreselectedStatsMatchup] = useState(null);
@@ -44,8 +44,8 @@ function AppContent() {
     setActiveTab(tab);
   };
 
-  // 1. Enquanto carrega a sessão de autenticação do Firebase
-  if (loading) {
+  // 1. Enquanto carrega a sessão de autenticação do Firebase ou sincroniza dados da liga
+  if (authLoading || (isAuthenticated && isLeagueLoading)) {
     return (
       <div className="bg-gray-950 min-h-screen flex flex-col items-center justify-center p-4 text-white">
         <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-500 flex items-center justify-center text-3xl shadow-xl shadow-amber-500/20 animate-bounce mb-4">
@@ -53,7 +53,8 @@ function AppContent() {
         </div>
         <p className="text-white font-black text-xl">NFL Bets da Resenha</p>
         <p className="text-gray-500 text-xs mt-2 flex items-center gap-2">
-          <span className="animate-spin inline-block">⏳</span> Verificando autenticação...
+          <span className="animate-spin inline-block">⏳</span>{" "}
+          {authLoading ? "Verificando autenticação..." : "Sincronizando com o banco de dados..."}
         </p>
       </div>
     );

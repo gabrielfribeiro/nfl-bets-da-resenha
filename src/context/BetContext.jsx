@@ -103,17 +103,22 @@ export function BetProvider({ children }) {
     isFirebaseConfigured() ? "syncing" : "offline"
   );
   const [cloudError, setCloudError] = useState(null);
+  const [isLeagueLoading, setIsLeagueLoading] = useState(() => isFirebaseConfigured());
   const isRemoteUpdateRef = useRef(false);
+  const initialCloudSyncCompletedRef = useRef(false);
 
   // 1. Ouvir atualizações da nuvem em tempo real (onSnapshot)
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!isFirebaseConfigured()) {
+      setIsLeagueLoading(false);
+      return;
+    }
 
     setCloudSyncStatus("syncing");
     const unsubscribe = subscribeToLeague(
       DEFAULT_LEAGUE_ID,
       (cloudData) => {
-        if (cloudData && typeof cloudData === "object") {
+        if (cloudData && typeof cloudData === "object" && (cloudData.setupComplete || cloudData.selectedTeamIds?.length > 0)) {
           isRemoteUpdateRef.current = true;
           setState((prev) => ({
             ...prev,
@@ -125,11 +130,15 @@ export function BetProvider({ children }) {
           // Documento ainda não existe no Firestore
           setCloudSyncStatus("connected");
         }
+        initialCloudSyncCompletedRef.current = true;
+        setIsLeagueLoading(false);
       },
       (err) => {
         console.warn("[Firebase] Erro ao sincronizar:", err);
         setCloudSyncStatus("error");
         setCloudError(err.message || "Erro ao conectar com Firebase");
+        initialCloudSyncCompletedRef.current = true;
+        setIsLeagueLoading(false);
       }
     );
 
@@ -139,6 +148,12 @@ export function BetProvider({ children }) {
   // 2. Salvar na nuvem quando o estado local sofrer alterações
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
+
+    // Proteção crucial: NUNCA salvar no Firestore antes de concluir a sincronização inicial!
+    // Isso impede que um navegador recém-aberto (ex: no PC) com localStorage vazio ou antigo sobrescreva o banco de dados.
+    if (!initialCloudSyncCompletedRef.current) {
+      return;
+    }
 
     if (isRemoteUpdateRef.current) {
       isRemoteUpdateRef.current = false;
@@ -860,6 +875,7 @@ export function BetProvider({ children }) {
         isCloudEnabled,
         cloudSyncStatus,
         cloudError,
+        isLeagueLoading,
         leagueId: DEFAULT_LEAGUE_ID,
       }}
     >
