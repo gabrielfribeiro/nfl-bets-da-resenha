@@ -384,28 +384,25 @@ export default function PotEvolutionChart({ selectedTeamIds, teams, bets, curren
                   {t.points.map((pt, idx) => {
                     const cx = getX(idx);
                     const cy = getY(pt.pot);
-                    const isHovered =
-                      hoveredPoint?.teamId === t.id && hoveredPoint?.round === pt.round;
 
                     return (
                       <g key={idx}>
-                        {/* Visible circle - decoupled from mouse events */}
+                        {/* Base visible circle */}
                         <circle
                           cx={cx}
                           cy={cy}
-                          r={isHovered ? 6.5 : isFocused ? 4.5 : 3.5}
-                          fill={isHovered ? "#ffffff" : strokeColor}
-                          stroke={isHovered ? strokeColor : "#030712"}
-                          strokeWidth={isHovered ? 3 : 1.5}
+                          r={isFocused ? 4 : 3}
+                          fill={strokeColor}
+                          stroke="#030712"
+                          strokeWidth={1.5}
                           opacity={opacity}
                           pointerEvents="none"
-                          className="transition-all duration-150"
                         />
                         {/* Invisible fixed hit target for stable hover */}
                         <circle
                           cx={cx}
                           cy={cy}
-                          r={16}
+                          r={14}
                           fill="transparent"
                           className="cursor-pointer"
                           onMouseEnter={() =>
@@ -416,6 +413,7 @@ export default function PotEvolutionChart({ selectedTeamIds, teams, bets, curren
                               pot: pt.pot,
                               x: cx,
                               y: cy,
+                              color: strokeColor,
                             })
                           }
                           onMouseLeave={() => setHoveredPoint(null)}
@@ -426,33 +424,54 @@ export default function PotEvolutionChart({ selectedTeamIds, teams, bets, curren
                 </g>
               );
             })}
+
+            {/* Active Hover Highlight Dot - rendered on top of ALL layers */}
+            {hoveredPoint && (
+              <g pointerEvents="none">
+                <circle
+                  cx={hoveredPoint.x}
+                  cy={hoveredPoint.y}
+                  r={8}
+                  fill={hoveredPoint.color || "#eab308"}
+                  opacity="0.3"
+                />
+                <circle
+                  cx={hoveredPoint.x}
+                  cy={hoveredPoint.y}
+                  r={4.5}
+                  fill={hoveredPoint.color || "#eab308"}
+                  stroke="#ffffff"
+                  strokeWidth={2}
+                />
+              </g>
+            )}
           </svg>
 
           {/* Floating Tooltip */}
           {hoveredPoint && (
             <div
-              className="absolute pointer-events-none z-30 bg-gray-900/95 border border-yellow-400/40 rounded-xl p-2.5 shadow-2xl backdrop-blur-md text-xs whitespace-nowrap transition-transform duration-75"
+              className="absolute pointer-events-none z-30 bg-gray-900/95 border border-yellow-400/30 rounded-2xl px-4 py-2.5 shadow-2xl backdrop-blur-md text-xs whitespace-nowrap"
               style={{
                 left: `${(hoveredPoint.x / width) * 100}%`,
                 top: `${(hoveredPoint.y / height) * 100}%`,
                 transform: `translate(${
-                  hoveredPoint.x > width * 0.75
-                    ? "-100%"
-                    : hoveredPoint.x < width * 0.25
-                    ? "0%"
+                  hoveredPoint.x > width - 110
+                    ? "-85%"
+                    : hoveredPoint.x < 110
+                    ? "-15%"
                     : "-50%"
-                }, ${hoveredPoint.y < 85 ? "20%" : "-120%"})`,
+                }, ${hoveredPoint.y < 80 ? "14px" : "calc(-100% - 12px)"})`,
               }}
             >
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1.5">
                 <img
                   src={getLogoUrl(hoveredPoint.team, 100)}
                   alt=""
-                  className="w-5 h-5 object-contain"
+                  className="w-4 h-4 object-contain flex-shrink-0"
                 />
-                <span className="font-black text-white">{hoveredPoint.team?.name}</span>
+                <span className="font-black text-white pr-1">{hoveredPoint.team?.name}</span>
               </div>
-              <div className="flex items-center justify-between gap-3 text-[11px]">
+              <div className="flex items-center justify-between gap-4 text-[11px]">
                 <span className="text-gray-400">
                   {hoveredPoint.round === 0 ? "Início" : `Rodada #${hoveredPoint.round}`}:
                 </span>
