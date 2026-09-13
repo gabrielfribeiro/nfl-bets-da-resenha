@@ -176,10 +176,10 @@ export function AuthProvider({ children }) {
   const isBlocked = !isDefaultAdmin && rawRole === "blocked";
   const role = isBlocked ? "blocked" : (isDefaultAdmin ? "admin" : rawRole);
 
-  const isAdmin = !isBlocked && (role === "admin" || isDefaultAdmin);
-  const isModerator = !isBlocked && (isAdmin || role === "moderator");
-  const isMember = !isBlocked && (isAdmin || isModerator || role === "member");
-  const isViewer = role === "viewer";
+  const isAdmin = !isBlocked && (role === "admin" || role === "comissario" || isDefaultAdmin);
+  const isModerator = !isBlocked && (isAdmin || role === "moderator" || role === "moderador");
+  const isMember = !isBlocked && (isAdmin || isModerator || role === "member" || role === "apostador");
+  const isViewer = role === "viewer" || role === "convidado";
 
   // Permissões específicas de funcionalidades
   const canConfigureLeague = isAdmin;
