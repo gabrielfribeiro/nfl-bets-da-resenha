@@ -952,8 +952,8 @@ function BetTicketCard({
           </div>
         )}
 
-        {/* Ações Rápidas de Resolução / Reabertura para Comissários e Moderadores */}
-        {canManage && (
+        {/* Ações: Resolução (Comissários e Moderadores) / Reabertura e Exclusão (Exclusivo Comissário) */}
+        {((bet.result === "pending" && canManage) || (bet.result !== "pending" && isAdmin)) && (
           <div className="pt-2 border-t border-gray-800/80 flex items-center gap-2 flex-wrap">
             {bet.result === "pending" ? (
               <>
@@ -975,25 +975,27 @@ function BetTicketCard({
                 </button>
               </>
             ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  if (
-                    confirm(
-                      "Deseja reabrir este palpite? O status voltará para Pendente e o pote será recalculado automaticamente."
-                    )
-                  ) {
-                    onReopen(bet.id);
-                  }
-                }}
-                className="flex-1 py-1.5 px-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-yellow-400/30 font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95"
-              >
-                <span>↩️</span>
-                <span>Reabrir Palpite (Voltar a Pendente)</span>
-              </button>
+              isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        "Deseja reabrir este palpite? O status voltará para Pendente e o pote será recalculado automaticamente."
+                      )
+                    ) {
+                      onReopen(bet.id);
+                    }
+                  }}
+                  className="flex-1 py-1.5 px-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-yellow-400/30 font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <span>↩️</span>
+                  <span>Reabrir Palpite (Voltar a Pendente)</span>
+                </button>
+              )
             )}
 
-            {/* Admin Delete Button */}
+            {/* Exclusão restrita exclusivamente ao Comissário */}
             {isAdmin && (
               <button
                 type="button"
@@ -1006,7 +1008,7 @@ function BetTicketCard({
                     onDelete(bet.id);
                   }
                 }}
-                title="Excluir aposta do histórico"
+                title="Excluir aposta do histórico (Exclusivo Comissário)"
                 className="p-2 rounded-xl bg-gray-900 hover:bg-red-500/20 text-gray-500 hover:text-red-400 border border-gray-800 hover:border-red-500/30 transition-all flex-shrink-0"
               >
                 <span className="text-sm">🗑️</span>
