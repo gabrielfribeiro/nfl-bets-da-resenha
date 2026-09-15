@@ -57,10 +57,11 @@ select option {
   align-items: center;
   height: 100%;
   width: max-content;
-  animation: tickerMarquee 180s linear infinite;
+  animation: tickerMarquee 25s linear infinite;
 }
 
-.animate-marquee:hover {
+.animate-marquee:hover,
+.animate-marquee:active {
   animation-play-state: paused;
 }
 
