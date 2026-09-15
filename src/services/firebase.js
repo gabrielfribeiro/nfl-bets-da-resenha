@@ -186,7 +186,7 @@ export function subscribeToLeague(leagueId, onData, onError) {
 /**
  * Salva ou atualiza os dados da liga no Firestore
  */
-export async function saveLeagueData(leagueId, data) {
+export async function saveLeagueData(leagueId, data, merge = true) {
   if (!db) {
     return false;
   }
@@ -199,7 +199,7 @@ export async function saveLeagueData(leagueId, data) {
         ...data,
         updatedAt: new Date().toISOString(),
       },
-      { merge: true }
+      { merge }
     );
     return true;
   } catch (err) {

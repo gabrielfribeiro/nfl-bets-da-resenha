@@ -1,6 +1,5 @@
-import { createContext, useContext, useCallback, useState, useEffect, useMemo, useRef } from "react";
+import { createContext, useContext, useCallback, useState, useEffect, useMemo } from "react";
 import confetti from "canvas-confetti";
-import { useLocalStorage } from "../hooks/useLocalStorage";
 import { getTeamById } from "../data/nflTeams";
 import { sounds } from "../utils/sound";
 import { getTier } from "../utils/tiers";
@@ -71,8 +70,18 @@ function triggerCelebration() {
 }
 
 export function BetProvider({ children }) {
-  const [state, setState] = useLocalStorage(STORAGE_KEY, initialState);
+  // Estado puramente em memória — o Firestore é a ÚNICA fonte de verdade
+  const [state, setState] = useState(initialState);
   const auth = useContext(AuthContext);
+
+  // Limpeza de segurança: remove chave legada do localStorage para evitar leituras ou rollbacks
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      console.warn("[BetContext] Erro ao limpar localStorage legado:", e);
+    }
+  }, []);
 
   const getCurrentUserResolver = useCallback(() => {
     if (!auth?.user && !auth?.userProfile) {
@@ -104,10 +113,26 @@ export function BetProvider({ children }) {
   );
   const [cloudError, setCloudError] = useState(null);
   const [isLeagueLoading, setIsLeagueLoading] = useState(() => isFirebaseConfigured());
-  const isRemoteUpdateRef = useRef(false);
-  const initialCloudSyncCompletedRef = useRef(false);
 
-  // 1. Ouvir atualizações da nuvem em tempo real (onSnapshot)
+  // Salvar no Firestore APENAS quando o usuário executa uma ação de mutação explícita
+  const persistState = useCallback((updater) => {
+    setState((prev) => {
+      const nextState = typeof updater === "function" ? updater(prev) : updater;
+      if (isFirebaseConfigured() && (nextState.setupComplete || nextState.selectedTeamIds?.length > 0)) {
+        setCloudSyncStatus("saving");
+        saveLeagueData(DEFAULT_LEAGUE_ID, nextState)
+          .then(() => setCloudSyncStatus("connected"))
+          .catch((err) => {
+            console.error("[Firebase] Erro ao salvar estado:", err);
+            setCloudSyncStatus("error");
+          });
+      }
+      return nextState;
+    });
+  }, []);
+
+  // 1. Ouvir atualizações da nuvem em tempo real (onSnapshot).
+  // Nunca retroalimenta o Firestore porque apenas chama setState (sem persistState).
   useEffect(() => {
     if (!isFirebaseConfigured()) {
       setIsLeagueLoading(false);
@@ -119,7 +144,6 @@ export function BetProvider({ children }) {
       DEFAULT_LEAGUE_ID,
       (cloudData) => {
         if (cloudData && typeof cloudData === "object" && (cloudData.setupComplete || cloudData.selectedTeamIds?.length > 0)) {
-          isRemoteUpdateRef.current = true;
           setState((prev) => ({
             ...prev,
             ...cloudData,
@@ -130,50 +154,18 @@ export function BetProvider({ children }) {
           // Documento ainda não existe no Firestore
           setCloudSyncStatus("connected");
         }
-        initialCloudSyncCompletedRef.current = true;
         setIsLeagueLoading(false);
       },
       (err) => {
         console.warn("[Firebase] Erro ao sincronizar:", err);
         setCloudSyncStatus("error");
         setCloudError(err.message || "Erro ao conectar com Firebase");
-        initialCloudSyncCompletedRef.current = true;
         setIsLeagueLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [setState]);
-
-  // 2. Salvar na nuvem quando o estado local sofrer alterações
-  useEffect(() => {
-    if (!isFirebaseConfigured()) return;
-
-    // Proteção crucial: NUNCA salvar no Firestore antes de concluir a sincronização inicial!
-    // Isso impede que um navegador recém-aberto (ex: no PC) com localStorage vazio ou antigo sobrescreva o banco de dados.
-    if (!initialCloudSyncCompletedRef.current) {
-      return;
-    }
-
-    if (isRemoteUpdateRef.current) {
-      isRemoteUpdateRef.current = false;
-      return;
-    }
-
-    if (state.setupComplete || state.selectedTeamIds.length > 0) {
-      setCloudSyncStatus("saving");
-      const timer = setTimeout(() => {
-        saveLeagueData(DEFAULT_LEAGUE_ID, state)
-          .then(() => setCloudSyncStatus("connected"))
-          .catch((err) => {
-            console.error("[Firebase] Erro ao salvar estado:", err);
-            setCloudSyncStatus("error");
-          });
-      }, 350);
-
-      return () => clearTimeout(timer);
-    }
-  }, [state]);
+  }, []);
 
   // Fallback for maxOdd and powerUps if old local storage exists without them
   const effectiveMaxOdd = state.maxOdd ?? DEFAULT_MAX_ODD;
@@ -191,9 +183,9 @@ export function BetProvider({ children }) {
   const setMaxOdd = useCallback((newMax) => {
     const val = parseFloat(newMax);
     if (!isNaN(val) && val >= 1.01) {
-      setState((prev) => ({ ...prev, maxOdd: val }));
+      persistState((prev) => ({ ...prev, maxOdd: val }));
     }
-  }, [setState]);
+  }, [persistState]);
 
   // ── POWER-UPS MANAGEMENT ───────────────────────────────────────────
   const addPowerUp = useCallback((newPower) => {
@@ -216,7 +208,7 @@ export function BetProvider({ children }) {
       enabled: true,
     };
 
-    setState((prev) => {
+    persistState((prev) => {
       const currentList = prev.powerUpsList ?? effectivePowerUpsList;
       const updatedList = [...currentList, powerItem];
       const updatedPowerUps = updatedList.reduce((acc, p) => {
@@ -230,10 +222,10 @@ export function BetProvider({ children }) {
       };
     });
     sounds.playLevelUp();
-  }, [effectivePowerUpsList, setState]);
+  }, [effectivePowerUpsList, persistState]);
 
   const removePowerUp = useCallback((powerId) => {
-    setState((prev) => {
+    persistState((prev) => {
       const currentList = prev.powerUpsList ?? effectivePowerUpsList;
       const updatedList = currentList.filter((p) => p.id !== powerId);
       const updatedPowerUps = updatedList.reduce((acc, p) => {
@@ -246,10 +238,10 @@ export function BetProvider({ children }) {
         powerUps: updatedPowerUps,
       };
     });
-  }, [effectivePowerUpsList, setState]);
+  }, [effectivePowerUpsList, persistState]);
 
   const updatePowerUp = useCallback((powerId, updates) => {
-    setState((prev) => {
+    persistState((prev) => {
       const currentList = prev.powerUpsList ?? effectivePowerUpsList;
       const updatedList = currentList.map((p) => (p.id === powerId ? { ...p, ...updates } : p));
       const updatedPowerUps = updatedList.reduce((acc, p) => {
@@ -262,10 +254,10 @@ export function BetProvider({ children }) {
         powerUps: updatedPowerUps,
       };
     });
-  }, [effectivePowerUpsList, setState]);
+  }, [effectivePowerUpsList, persistState]);
 
   const setPowerUpQuantity = useCallback((powerId, deltaOrVal, isDelta = false) => {
-    setState((prev) => {
+    persistState((prev) => {
       const currentList = prev.powerUpsList ?? effectivePowerUpsList;
       const updatedList = currentList.map((p) => {
         if (p.id === powerId) {
@@ -284,7 +276,7 @@ export function BetProvider({ children }) {
         powerUps: updatedPowerUps,
       };
     });
-  }, [effectivePowerUpsList, setState]);
+  }, [effectivePowerUpsList, persistState]);
 
   // ── SETUP ──────────────────────────────────────────────────────────
   const completeSetup = useCallback((teamIds) => {
@@ -298,7 +290,7 @@ export function BetProvider({ children }) {
         totalLosses: 0,
       };
     });
-    setState((prev) => ({
+    persistState((prev) => ({
       ...prev,
       selectedTeamIds: teamIds,
       teams,
@@ -308,7 +300,7 @@ export function BetProvider({ children }) {
     }));
     triggerCelebration();
     sounds.playLevelUp();
-  }, [setState]);
+  }, [persistState]);
 
   const resetSetup = useCallback(() => {
     try {
@@ -318,9 +310,9 @@ export function BetProvider({ children }) {
     }
     setState(initialState);
     if (isFirebaseConfigured()) {
-      saveLeagueData(DEFAULT_LEAGUE_ID, initialState).catch(console.error);
+      saveLeagueData(DEFAULT_LEAGUE_ID, initialState, false).catch(console.error);
     }
-  }, [setState]);
+  }, []);
 
   // ── BETS ───────────────────────────────────────────────────────────
   const addBet = useCallback((betData) => {
@@ -329,7 +321,7 @@ export function BetProvider({ children }) {
     const teamId = betData.bettingOnTeamId;
     const usedPowerUp = betData.powerUp; // power ID or null
 
-    setState((prev) => {
+    persistState((prev) => {
       const teamState = prev.teams[teamId];
       if (!teamState) return prev;
 
@@ -428,10 +420,10 @@ export function BetProvider({ children }) {
         },
       };
     });
-  }, [setState, getCurrentUserResolver]);
+  }, [persistState, getCurrentUserResolver, effectivePowerUpsList]);
 
   const updateBetResult = useCallback((betId, result, customResolver) => {
-    setState((prev) => {
+    persistState((prev) => {
       const bet = prev.bets.find((b) => b.id === betId);
       if (!bet || bet.result !== "pending") return prev;
 
@@ -509,10 +501,10 @@ export function BetProvider({ children }) {
         },
       };
     });
-  }, [effectivePowerUpsList, setState, getCurrentUserResolver]);
+  }, [effectivePowerUpsList, persistState, getCurrentUserResolver]);
 
   const reopenBet = useCallback((betId) => {
-    setState((prev) => {
+    persistState((prev) => {
       const bet = prev.bets.find((b) => b.id === betId);
       if (!bet || bet.result === "pending") return prev;
 
@@ -563,19 +555,19 @@ export function BetProvider({ children }) {
         },
       };
     });
-  }, [effectivePowerUpsList, setState]);
+  }, [effectivePowerUpsList, persistState]);
 
   const deleteBet = useCallback((betId) => {
-    setState((prev) => ({
+    persistState((prev) => ({
       ...prev,
       bets: prev.bets.filter((b) => b.id !== betId),
     }));
-  }, [setState]);
+  }, [persistState]);
 
   // ── POT MANAGEMENT ─────────────────────────────────────────────────
   const addPotFunds = useCallback((teamId, amount) => {
     sounds.playWin();
-    setState((prev) => {
+    persistState((prev) => {
       const teamState = prev.teams[teamId];
       if (!teamState) return prev;
       const newPot = parseFloat((teamState.pot + amount).toFixed(2));
@@ -593,7 +585,7 @@ export function BetProvider({ children }) {
         },
       };
     });
-  }, [setState]);
+  }, [persistState]);
 
   // ── NFL WEEK & ROUNDS ───────────────────────────────────────────────
   const [isSyncingNflWeek, setIsSyncingNflWeek] = useState(false);
@@ -601,21 +593,30 @@ export function BetProvider({ children }) {
   const setCurrentRound = useCallback((round) => {
     const val = parseInt(round);
     if (!isNaN(val) && val >= 1 && val <= 25) {
-      setState((prev) => ({ ...prev, currentRound: val }));
+      persistState((prev) => ({ ...prev, currentRound: val }));
     }
-  }, [setState]);
+  }, [persistState]);
 
-  const syncWithNflWeek = useCallback(async () => {
+  const syncWithNflWeek = useCallback(async (saveToCloud = true) => {
     setIsSyncingNflWeek(true);
     try {
       const nflWeek = await fetchCurrentNflWeek();
       if (nflWeek && typeof nflWeek === "number") {
-        setState((prev) => {
-          if (prev.currentRound !== nflWeek) {
-            return { ...prev, currentRound: nflWeek };
-          }
-          return prev;
-        });
+        if (saveToCloud) {
+          persistState((prev) => {
+            if (prev.currentRound !== nflWeek) {
+              return { ...prev, currentRound: nflWeek };
+            }
+            return prev;
+          });
+        } else {
+          setState((prev) => {
+            if (prev.currentRound !== nflWeek) {
+              return { ...prev, currentRound: nflWeek };
+            }
+            return prev;
+          });
+        }
         return nflWeek;
       }
     } catch (err) {
@@ -624,11 +625,15 @@ export function BetProvider({ children }) {
       setIsSyncingNflWeek(false);
     }
     return null;
-  }, [setState]);
+  }, [persistState]);
 
-  // Sincroniza a rodada com a semana da NFL automaticamente na inicialização
+  // Se o Firebase NÃO estiver configurado (modo offline local),
+  // sincroniza a rodada com a semana da NFL automaticamente na inicialização.
+  // Com Firebase ativo, a semana cadastrada no Firestore é a autoridade máxima.
   useEffect(() => {
-    syncWithNflWeek();
+    if (!isFirebaseConfigured()) {
+      syncWithNflWeek(false);
+    }
   }, [syncWithNflWeek]);
 
   // ── SCOREBOARD, LIVE GAMES STATUS & FINISHED PENDING BETS ─────────────
@@ -731,8 +736,8 @@ export function BetProvider({ children }) {
   }, [state.selectedTeamIds, state.teams]);
 
   const nextRound = useCallback(() => {
-    setState((prev) => ({ ...prev, currentRound: prev.currentRound + 1 }));
-  }, [setState]);
+    persistState((prev) => ({ ...prev, currentRound: prev.currentRound + 1 }));
+  }, [persistState]);
 
   // ── EXPORT / IMPORT BACKUP ──────────────────────────────────────────
   const exportJSON = useCallback(() => {
@@ -794,7 +799,7 @@ export function BetProvider({ children }) {
         setupComplete: jsonData.setupComplete ?? true,
       };
 
-      setState(newState);
+      persistState(newState);
       triggerCelebration();
       sounds.playLevelUp();
       return {
@@ -810,7 +815,7 @@ export function BetProvider({ children }) {
         error: err.message || "Erro desconhecido ao ler o arquivo de backup.",
       };
     }
-  }, [setState]);
+  }, [persistState]);
 
   // ── HELPERS ────────────────────────────────────────────────────────
   const getMinBet = useCallback(
