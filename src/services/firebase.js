@@ -1,5 +1,15 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, doc, getDoc, collection, onSnapshot, setDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  onSnapshot,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+  getDocs,
+} from "firebase/firestore";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -154,12 +164,13 @@ export async function updateUserTeam(uid, teamId) {
   return await saveUserProfile(uid, { teamId });
 }
 
-// ── FIRESTORE LEAGUE SYNC ───────────────────────────────────────────
+// ── FIRESTORE LEAGUE SYNC (ARQUITETURA MODULAR POR LIGA) ─────────────
 
 /**
- * Inscreve-se para atualizações em tempo real do documento da liga no Firestore
+ * 1. Inscreve-se para atualizações em tempo real do documento de configuração e potes da liga:
+ *    caminho: `leagues/{leagueId}`
  */
-export function subscribeToLeague(leagueId, onData, onError) {
+export function subscribeToLeagueConfig(leagueId, onData, onError) {
   if (!db) {
     return () => {};
   }
@@ -172,40 +183,190 @@ export function subscribeToLeague(leagueId, onData, onError) {
       if (snapshot.exists()) {
         onData(snapshot.data());
       } else {
-        // Documento ainda não existe na nuvem
         onData(null);
       }
     },
     (err) => {
-      console.warn("[Firebase] Erro ao sincronizar liga:", err);
+      console.warn("[Firebase] Erro ao sincronizar configurações da liga:", err);
       if (onError) onError(err);
     }
   );
 }
 
 /**
- * Salva ou atualiza os dados da liga no Firestore
+ * 2. Inscreve-se para atualizações em tempo real da subcoleção de apostas da liga:
+ *    caminho: `leagues/{leagueId}/bets`
  */
-export async function saveLeagueData(leagueId, data, merge = true) {
+export function subscribeToLeagueBets(leagueId, onData, onError) {
+  if (!db) {
+    onData([]);
+    return () => {};
+  }
+
+  const betsColRef = collection(db, "leagues", leagueId || DEFAULT_LEAGUE_ID, "bets");
+
+  return onSnapshot(
+    betsColRef,
+    (snapshot) => {
+      const betsList = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      // Ordena por data decrescente (mais recentes primeiro)
+      betsList.sort((a, b) => {
+        const timeA = new Date(a.createdAt || 0).getTime();
+        const timeB = new Date(b.createdAt || 0).getTime();
+        return timeB - timeA;
+      });
+
+      onData(betsList);
+    },
+    (err) => {
+      console.warn("[Firebase] Erro ao sincronizar histórico de apostas:", err);
+      if (onError) onError(err);
+    }
+  );
+}
+
+/**
+ * 3. Salva ou atualiza as configurações e potes da liga:
+ *    caminho: `leagues/{leagueId}` (sem incluir o array bets)
+ */
+export async function saveLeagueConfig(leagueId, data, merge = true) {
   if (!db) {
     return false;
   }
 
   try {
     const leagueDocRef = doc(db, "leagues", leagueId || DEFAULT_LEAGUE_ID);
+    // Remove o array bets se presente, pois as apostas residem na subcoleção 'bets'
+    const { bets, ...configData } = data || {};
+
     await setDoc(
       leagueDocRef,
       {
-        ...data,
+        ...configData,
         updatedAt: new Date().toISOString(),
       },
       { merge }
     );
     return true;
   } catch (err) {
-    console.error("[Firebase] Erro ao salvar dados no Firestore:", err);
+    console.error("[Firebase] Erro ao salvar configurações da liga no Firestore:", err);
     throw err;
   }
 }
+
+/**
+ * 4. Salva ou atualiza um documento de aposta individual:
+ *    caminho: `leagues/{leagueId}/bets/{betId}`
+ */
+export async function saveBetDoc(leagueId, bet) {
+  if (!db || !bet || !bet.id) {
+    return false;
+  }
+
+  try {
+    const betDocRef = doc(db, "leagues", leagueId || DEFAULT_LEAGUE_ID, "bets", bet.id);
+    await setDoc(
+      betDocRef,
+      {
+        ...bet,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (err) {
+    console.error(`[Firebase] Erro ao salvar aposta ${bet.id}:`, err);
+    throw err;
+  }
+}
+
+/**
+ * 5. Exclui um documento de aposta individual:
+ *    caminho: `leagues/{leagueId}/bets/{betId}`
+ */
+export async function deleteBetDoc(leagueId, betId) {
+  if (!db || !betId) {
+    return false;
+  }
+
+  try {
+    const betDocRef = doc(db, "leagues", leagueId || DEFAULT_LEAGUE_ID, "bets", betId);
+    await deleteDoc(betDocRef);
+    return true;
+  } catch (err) {
+    console.error(`[Firebase] Erro ao deletar aposta ${betId}:`, err);
+    throw err;
+  }
+}
+
+/**
+ * 6. Migração transparente de apostas legadas (do array do documento principal para a subcoleção):
+ */
+export async function migrateLegacyBets(leagueId, legacyBets) {
+  if (!db || !Array.isArray(legacyBets) || legacyBets.length === 0) {
+    return 0;
+  }
+
+  const activeLeagueId = leagueId || DEFAULT_LEAGUE_ID;
+  console.log(`[Firebase Migration] Iniciando migração de ${legacyBets.length} apostas para subcoleção bets...`);
+
+  try {
+    const batch = writeBatch(db);
+
+    legacyBets.forEach((bet) => {
+      if (bet && bet.id) {
+        const betRef = doc(db, "leagues", activeLeagueId, "bets", bet.id);
+        batch.set(betRef, {
+          ...bet,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+      }
+    });
+
+    // Limpa o array legado do documento principal para não duplicar no futuro
+    const leagueDocRef = doc(db, "leagues", activeLeagueId);
+    batch.set(leagueDocRef, { bets: [] }, { merge: true });
+
+    await batch.commit();
+    console.log(`[Firebase Migration] ${legacyBets.length} apostas migradas com sucesso!`);
+    return legacyBets.length;
+  } catch (err) {
+    console.error("[Firebase Migration] Erro durante a migração de apostas:", err);
+    return 0;
+  }
+}
+
+/**
+ * 7. Limpa todas as apostas da subcoleção (usado no reset do comissário):
+ */
+export async function deleteAllBets(leagueId) {
+  if (!db) return;
+  try {
+    const activeLeagueId = leagueId || DEFAULT_LEAGUE_ID;
+    const betsColRef = collection(db, "leagues", activeLeagueId, "bets");
+    const snapshot = await getDocs(betsColRef);
+    if (snapshot.empty) return;
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((d) => {
+      batch.delete(d.ref);
+    });
+    await batch.commit();
+    console.log(`[Firebase] Subcoleção de apostas limpa com sucesso.`);
+  } catch (err) {
+    console.error("[Firebase] Erro ao limpar subcoleção de apostas:", err);
+  }
+}
+
+/**
+ * Compatibilidade legada para referências antigas:
+ */
+export const subscribeToLeague = subscribeToLeagueConfig;
+export const saveLeagueData = saveLeagueConfig;
+
 
 

@@ -62,8 +62,12 @@ export default function BroadcastTicker() {
     }),
   ];
 
-  // If few items, duplicate to maintain smooth scrolling loop
-  const tickerItems = [...items, ...items, ...items];
+  // Duplica exatamente para loop contínuo e suave com -50% de translação
+  let filledItems = items;
+  while (filledItems.length < 8 && items.length > 0) {
+    filledItems = [...filledItems, ...items];
+  }
+  const tickerItems = [...filledItems, ...filledItems];
 
   return (
     <div className="fixed bottom-16 left-0 right-0 bg-gray-950/95 border-t border-red-600/60 z-30 overflow-hidden backdrop-blur-md shadow-2xl">
