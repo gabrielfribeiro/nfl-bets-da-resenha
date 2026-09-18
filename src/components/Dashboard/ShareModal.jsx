@@ -206,10 +206,10 @@ Acompanhe os resultados no painel do bolão!`
                 </div>
               </div>
 
-              {/* Equação: Pote Geral + Lucro Rodada = Retorno Potencial */}
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap justify-end">
+              {/* Barra Única Integrada de Valores */}
+              <div className="bg-gray-950/90 border border-white/10 rounded-2xl p-1.5 px-3 flex items-center gap-2.5 self-end sm:self-auto shadow-inner">
                 {/* 1. Pote Geral */}
-                <div className="bg-gray-950/80 border border-yellow-500/30 px-2.5 py-1.5 rounded-xl text-center shadow-inner">
+                <div className="text-right">
                   <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">
                     Pote Geral
                   </span>
@@ -219,11 +219,11 @@ Acompanhe os resultados no painel do bolão!`
                 </div>
 
                 {/* Sinal + */}
-                <span className="text-gray-500 font-black text-sm px-0.5">+</span>
+                <span className="text-gray-500 font-bold text-xs">+</span>
 
                 {/* 2. Lucro Rodada */}
-                <div className="bg-gray-950/80 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl text-center shadow-inner">
-                  <span className="text-[9px] text-emerald-400/80 block uppercase font-bold tracking-wider">
+                <div className="text-right">
+                  <span className="text-[9px] text-emerald-400/90 block uppercase font-bold tracking-wider">
                     Lucro Rodada
                   </span>
                   <span className="text-emerald-400 font-black text-xs sm:text-sm block leading-tight">
@@ -231,17 +231,17 @@ Acompanhe os resultados no painel do bolão!`
                   </span>
                 </div>
 
-                {/* Sinal = */}
-                <span className="text-gray-500 font-black text-sm px-0.5">=</span>
-
-                {/* 3. Retorno Potencial */}
-                <div className="bg-emerald-950/40 border border-emerald-500/50 px-3 py-1.5 rounded-xl text-center shadow-lg shadow-emerald-950/40">
-                  <span className="text-[9px] text-emerald-300 block uppercase font-black tracking-wider">
-                    Retorno Potencial
-                  </span>
-                  <span className="text-emerald-300 font-black text-xs sm:text-sm block leading-tight">
-                    R$ {projectedPot.toFixed(2)}
-                  </span>
+                {/* Divisória com = e Retorno Potencial */}
+                <div className="flex items-center gap-2 pl-2 border-l border-white/15">
+                  <span className="text-emerald-500/80 font-bold text-xs">=</span>
+                  <div className="text-right">
+                    <span className="text-[9px] text-emerald-300 block uppercase font-black tracking-wider">
+                      Retorno Potencial
+                    </span>
+                    <span className="text-emerald-400 font-black text-sm sm:text-base block leading-tight">
+                      R$ {projectedPot.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
