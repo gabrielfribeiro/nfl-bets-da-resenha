@@ -155,17 +155,16 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               <span className="sm:hidden text-[11px] font-extrabold">Sem. #{currentRound}</span>
             </button>
 
-            {/* Mobile Live games indicator badge (compact) */}
+            {/* Mobile Live games indicator dot (blinking, without text) */}
             {liveGamesCount > 0 && (
               <button
                 type="button"
                 onClick={() => setActiveTab("games")}
-                title="Ver jogos ao vivo"
-                className="h-9 px-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 text-red-400 text-xs font-black flex sm:hidden items-center gap-1 animate-pulse flex-shrink-0"
+                title={`${liveGamesCount} jogo(s) ao vivo - Ver Jogos`}
+                className="w-9 h-9 rounded-lg bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 flex sm:hidden items-center justify-center transition-all shadow-md shadow-red-600/20 active:scale-95 flex-shrink-0 relative"
               >
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                <span>{liveGamesCount}</span>
-                <span className="hidden min-[380px]:inline text-[10px] uppercase tracking-wider">Ao Vivo</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping absolute" />
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 relative shadow-sm shadow-red-500" />
               </button>
             )}
 
