@@ -449,15 +449,21 @@ export default function LeaderboardTable({ selectedTeamIds, teams, bets, current
                             <div className="mt-2.5 pt-2 border-t border-gray-800/80">
                               <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 mb-1">
                                 <span>Próxima: {item.nextTier.badge} {item.nextTier.name}</span>
-                                <span className="text-emerald-400 tabular-nums font-black">
-                                  Falta R$ {Math.max(0, item.nextTier.min - item.pot).toFixed(2)}
+                                <span className={item.pot <= 0 ? "text-rose-400 font-black" : "text-emerald-400 tabular-nums font-black"}>
+                                  {item.pot <= 0
+                                    ? "Ative um Salva-Vidas!"
+                                    : `Falta R$ ${Math.max(0, item.nextTier.min - item.pot).toFixed(2)}`}
                                 </span>
                               </div>
                               <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
                                 <div
-                                  className="bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 h-full rounded-full transition-all duration-300"
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    item.pot <= 0
+                                      ? "bg-rose-500 w-0"
+                                      : "bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400"
+                                  }`}
                                   style={{
-                                    width: `${Math.min(
+                                    width: item.pot <= 0 ? "0%" : `${Math.min(
                                       100,
                                       Math.max(
                                         8,
@@ -479,7 +485,9 @@ export default function LeaderboardTable({ selectedTeamIds, teams, bets, current
 
                           {/* Tip */}
                           <p className="text-[9px] text-gray-500 mt-2">
-                            💡 As patentes sobem automaticamente conforme o time ganha apostas e acumula saldo!
+                            {item.pot <= 0
+                              ? "⚠️ Time zerado! Precisa acionar o Salva-Vidas para voltar a pontuar."
+                              : "💡 As patentes sobem automaticamente conforme o time ganha apostas e acumula saldo!"}
                           </p>
                         </div>
                       </div>

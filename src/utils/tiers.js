@@ -1,8 +1,18 @@
 export const TIERS = [
   {
+    id: "entrou_porque",
+    name: "Entrou Por Quê?",
+    min: 0,
+    badge: "🤡",
+    desc: "Zerou a banca! Veio só pra doar dinheiro e passar vergonha na resenha.",
+    color: "text-red-400",
+    border: "border-red-500/50",
+    bg: "bg-red-950/40",
+  },
+  {
     id: "pangare",
     name: "Pangaré",
-    min: 0,
+    min: 0.01,
     badge: "🥜",
     desc: "Apostando moedinhas e rezando pelo milagre.",
     color: "text-amber-500",
