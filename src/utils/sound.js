@@ -177,6 +177,10 @@ class SoundEffects {
       // Audio context safe fallback
     }
   }
+
+  playBetPlaced() {
+    this.playCash();
+  }
 }
 
 export const sounds = new SoundEffects();

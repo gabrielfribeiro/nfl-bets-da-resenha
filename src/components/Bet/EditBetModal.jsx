@@ -64,11 +64,15 @@ export default function EditBetModal({ bet, onClose }) {
         marketDetails: marketDetails.trim(),
         note: note.trim(),
       });
-      sounds.playBetPlaced();
+      try {
+        sounds.playCash?.();
+      } catch {
+        // Audio safe fallback
+      }
       onClose();
     } catch (err) {
       console.error("Erro ao editar aposta:", err);
-      alert("Ocorreu um erro ao salvar as alterações da aposta.");
+      alert("Ocorreu um erro ao salvar as alterações da aposta: " + (err?.message || ""));
       setSaving(false);
     }
   };
