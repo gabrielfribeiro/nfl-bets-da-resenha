@@ -23,6 +23,7 @@ function getTrackEmoji(name) {
   if (lower.includes('piseiro') || lower.includes('forro')) return '🎹'
   if (lower.includes('estrada') || lower.includes('modao') || lower.includes('sertanejo')) return '🤠'
   if (lower.includes('funk')) return '🔊'
+  if (lower.includes('reggaeton') || lower.includes('maraca') || lower.includes('latino')) return '🪇'
   if (lower.includes('nfl')) return '🏈'
   return '🎵'
 }
