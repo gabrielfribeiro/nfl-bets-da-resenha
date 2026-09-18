@@ -1,4 +1,4 @@
-﻿export const BET_MARKETS = [
+export const BET_MARKETS = [
   {
     id: "moneyline",
     label: "Vencedor Seco",
@@ -44,10 +44,19 @@
     label: "Ambos Marcam",
     icon: "⏱️",
     badge: "Ambos Marcam",
-    placeholder: "Ex: Ambos marcam no 1º tempo",
-    defaultDetail: "Ambos marcam em algum tempo",
+    placeholder: "Ex: Ambos marcam no 1º quarto",
+    defaultDetail: "Ambos marcam no 1º quarto",
     color: "from-purple-500/20 to-indigo-500/20 text-purple-400 border-purple-400/40",
-    chips: ["1º Tempo", "2º Tempo", "Ambos os Tempos", "Mais de 10 pts cada tempo"],
+    chips: [
+      "1º Quarto",
+      "2º Quarto",
+      "3º Quarto",
+      "4º Quarto",
+      "Todos os Quartos",
+      "1º Tempo",
+      "2º Tempo",
+      "Ambos os Tempos",
+    ],
   },
   {
     id: "touchdown",
