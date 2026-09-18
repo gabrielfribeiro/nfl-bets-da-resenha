@@ -32,10 +32,17 @@ export default function ShareModal({ onClose }) {
     return sum + profit;
   }, 0);
 
-  const totalPotentialReturn = roundBets.reduce((sum, b) => {
-    const { total } = calculatePotentialReturn(b, powerUpsList);
-    return sum + total;
+  const pendingBets = roundBets.filter((b) => b.result === "pending");
+  const pendingProfit = pendingBets.reduce((sum, b) => {
+    const { profit } = calculatePotentialReturn(b, powerUpsList);
+    return sum + profit;
   }, 0);
+
+  const displayRoundProfit = roundBets.some((b) => b.result === "pending")
+    ? pendingProfit
+    : totalPotentialProfit;
+
+  const projectedPot = totalPot + displayRoundProfit;
 
   // Text format for WhatsApp
   const generateWhatsAppText = () => {
@@ -70,8 +77,9 @@ export default function ShareModal({ onClose }) {
 `🏈 *NFL BETS DA RESENHA* 🏈
 ━━━━━━━━━━━━━━━━━━━━
 📅 *Rodada #${selectedRound}*
-💰 *Pote Geral Acumulado:* R$ ${totalPot.toFixed(2)}
-💵 *Retorno Potencial da Rodada:* R$ ${totalPotentialReturn.toFixed(2)} (+R$ ${totalPotentialProfit.toFixed(2)} lucro)
+💰 *Pote Geral:* R$ ${totalPot.toFixed(2)}
+📈 *Lucro Rodada:* +R$ ${displayRoundProfit.toFixed(2)}
+🎯 *Retorno Potencial:* R$ ${projectedPot.toFixed(2)}
 📊 *Resultado:* ${wonBets.length} Green ✅ | ${lossBets.length} Red ❌
 ━━━━━━━━━━━━━━━━━━━━
 🎯 *APOSTAS DA RODADA #${selectedRound}:*
@@ -187,7 +195,7 @@ Acompanhe os resultados no painel do bolão!`
             className="bg-gradient-to-br from-gray-950 via-gray-900 to-red-950/40 border-2 border-yellow-400/40 rounded-3xl p-5 shadow-2xl relative overflow-hidden w-full"
           >
             {/* Top header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4 gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 mb-4 gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="text-2xl flex-shrink-0">🏈</span>
                 <div className="min-w-0">
@@ -198,31 +206,42 @@ Acompanhe os resultados no painel do bolão!`
                 </div>
               </div>
 
-              <div className="flex items-center gap-3.5 text-right flex-shrink-0">
-                {/* Somatória dos Ganhos Potenciais da Rodada */}
-                {roundBets.length > 0 && (
-                  <div className="text-right">
-                    <span className="text-[10px] text-emerald-400/90 block uppercase font-bold tracking-tight">
-                      Retorno Potencial
-                    </span>
-                    <span className="text-emerald-400 font-black text-base block leading-tight">
-                      R$ {totalPotentialReturn.toFixed(2)}
-                    </span>
-                    <span className="text-[9px] text-emerald-500/90 font-semibold block">
-                      (+R$ {totalPotentialProfit.toFixed(2)} lucro)
-                    </span>
-                  </div>
-                )}
+              {/* Equação: Pote Geral + Lucro Rodada = Retorno Potencial */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap justify-end">
+                {/* 1. Pote Geral */}
+                <div className="bg-gray-950/80 border border-yellow-500/30 px-2.5 py-1.5 rounded-xl text-center shadow-inner">
+                  <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">
+                    Pote Geral
+                  </span>
+                  <span className="text-yellow-400 font-black text-xs sm:text-sm block leading-tight">
+                    R$ {totalPot.toFixed(2)}
+                  </span>
+                </div>
 
-                {/* Linha Divisória */}
-                {roundBets.length > 0 && (
-                  <div className="w-[1px] h-8 bg-white/15" />
-                )}
+                {/* Sinal + */}
+                <span className="text-gray-500 font-black text-sm px-0.5">+</span>
 
-                {/* Pote Geral */}
-                <div className="text-right">
-                  <span className="text-[10px] text-gray-400 block uppercase font-bold">Pote Geral</span>
-                  <span className="text-yellow-400 font-black text-lg block leading-tight">R$ {totalPot.toFixed(2)}</span>
+                {/* 2. Lucro Rodada */}
+                <div className="bg-gray-950/80 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl text-center shadow-inner">
+                  <span className="text-[9px] text-emerald-400/80 block uppercase font-bold tracking-wider">
+                    Lucro Rodada
+                  </span>
+                  <span className="text-emerald-400 font-black text-xs sm:text-sm block leading-tight">
+                    +R$ {displayRoundProfit.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Sinal = */}
+                <span className="text-gray-500 font-black text-sm px-0.5">=</span>
+
+                {/* 3. Retorno Potencial */}
+                <div className="bg-emerald-950/40 border border-emerald-500/50 px-3 py-1.5 rounded-xl text-center shadow-lg shadow-emerald-950/40">
+                  <span className="text-[9px] text-emerald-300 block uppercase font-black tracking-wider">
+                    Retorno Potencial
+                  </span>
+                  <span className="text-emerald-300 font-black text-xs sm:text-sm block leading-tight">
+                    R$ {projectedPot.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
