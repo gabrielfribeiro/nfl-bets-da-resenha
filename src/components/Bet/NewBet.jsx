@@ -399,18 +399,16 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
             )}
           </div>
 
-          {/* Power-ups Section */}
-          <div className="bg-gray-900/90 border border-gray-800 rounded-3xl p-5 shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest">
-                Cartas de Poder (Opcional)
-              </h3>
-              <span className="text-[11px] text-yellow-400 font-semibold">Uso limitado</span>
-            </div>
+          {/* Power-ups Section (only shown if there is at least one active power-up) */}
+          {powerUpsList && powerUpsList.some((power) => power.enabled) && (
+            <div className="bg-gray-900/90 border border-gray-800 rounded-3xl p-5 shadow-xl">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest">
+                  Cartas de Poder (Opcional)
+                </h3>
+                <span className="text-[11px] text-yellow-400 font-semibold">Uso limitado</span>
+              </div>
 
-            {(!powerUpsList || powerUpsList.filter((p) => p.enabled).length === 0) ? (
-              <p className="text-gray-500 text-xs italic">Nenhuma carta de poder ativa no momento.</p>
-            ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {powerUpsList
                   .filter((power) => power.enabled)
@@ -454,8 +452,8 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
                     );
                   })}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: Bet Values, Result & Submit (5 cols) */}
