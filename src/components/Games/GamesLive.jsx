@@ -3,6 +3,7 @@ import { fetchNflScoreboard } from "../../services/espnApi";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { getLogoUrl } from "../../data/nflTeams";
+import { getMarketDisplay } from "../../utils/markets";
 
 export default function GamesLive({ onQuickBet, onOpenStats }) {
   const { selectedTeamIds, bets, updateBetResult, powerUpsList, currentRound, registerGames } = useBet();
@@ -472,6 +473,11 @@ export default function GamesLive({ onQuickBet, onOpenStats }) {
                               <span className="text-white font-black text-xs truncate">
                                 Apostou no <strong>{bettingTeam?.name || "Time"}</strong>
                               </span>
+                              {getMarketDisplay(bet) && (
+                                <span className="text-[10px] font-bold text-yellow-300 bg-yellow-400/15 border border-yellow-400/30 px-1.5 py-0.2 rounded truncate">
+                                  🎯 {getMarketDisplay(bet)}
+                                </span>
+                              )}
                               {bet.powerUp && (
                                 <span
                                   title={

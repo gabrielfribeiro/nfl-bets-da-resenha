@@ -429,6 +429,8 @@ export function BetProvider({ children }) {
         potBefore: teamState.pot,
         potAfter: newPot,
         powerUp: usedPowerUp || null,
+        marketType: betData.marketType || "moneyline",
+        marketDetails: betData.marketDetails || "",
         note: betData.note || "",
         createdBy: createdByInfo,
         resolvedBy: resolvedByInfo,

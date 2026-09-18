@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
+import { getMarketBadge, getMarketDisplay } from "../../utils/markets";
 
 const RESULT_CONFIG = {
   win: {
@@ -805,12 +806,24 @@ function BetTicketCard({
               }}
             />
             <div className="min-w-0">
-              <span className="text-[10px] font-black text-yellow-400 uppercase tracking-wider block">
-                🎯 Palpite Selecionado
-              </span>
-              <span className="text-white font-black text-sm truncate block">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-black text-yellow-400 uppercase tracking-wider block">
+                  🎯 Palpite Selecionado
+                </span>
+                {getMarketBadge(bet) && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border bg-gray-950/80 ${getMarketBadge(bet).color}`}>
+                    {getMarketBadge(bet).icon} {getMarketBadge(bet).label}
+                  </span>
+                )}
+              </div>
+              <span className="text-white font-black text-sm truncate block mt-0.5">
                 {bettingOn?.name || bet.bettingOnTeamId}
               </span>
+              {bet.marketDetails && (
+                <span className="text-xs font-semibold text-amber-200/90 block truncate mt-0.5">
+                  📌 {bet.marketDetails}
+                </span>
+              )}
             </div>
           </div>
 

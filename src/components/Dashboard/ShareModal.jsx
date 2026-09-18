@@ -3,6 +3,7 @@ import { toBlob, toPng } from "html-to-image";
 import { useBet } from "../../context/BetContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { sounds } from "../../utils/sound";
+import { getMarketDisplay } from "../../utils/markets";
 
 export default function ShareModal({ onClose }) {
   const { currentRound, selectedTeamIds, teams, bets, maxOdd } = useBet();
@@ -46,7 +47,9 @@ export default function ShareModal({ onClose }) {
                   ? " [⚡ Turbo 2X]"
                   : "";
               const vsText = rival ? ` (vs ${rival.name})` : "";
-              return `👉 *${team?.name || "Time"}*${vsText}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${powerUpTag} -> ${status}`;
+              const marketText = getMarketDisplay(b);
+              const marketLine = marketText ? `\n   🎯 *Palpite:* ${marketText}` : "";
+              return `👉 *${team?.name || "Time"}*${vsText}${marketLine}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${powerUpTag} -> ${status}`;
             })
             .join("\n")
         : "_Nenhuma aposta registrada nesta rodada._";
@@ -252,6 +255,13 @@ Acompanhe os resultados no painel do bolão!`
                           <span className="text-[10px] text-gray-400 block truncate">
                             vs {rival.name}
                           </span>
+                        )}
+                        {getMarketDisplay(bet) && (
+                          <div className="mt-1 flex items-center">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-yellow-300 bg-yellow-400/15 border border-yellow-400/30 px-1.5 py-0.5 rounded shadow-sm">
+                              🎯 {getMarketDisplay(bet)}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
