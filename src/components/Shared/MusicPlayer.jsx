@@ -41,7 +41,13 @@ export default function MusicPlayer() {
   // Busca lista de músicas da pasta public/audio
   const fetchPlaylist = useCallback(async () => {
     try {
-      let res = await fetch(`/api/playlist?t=${Date.now()}`);
+      // Em produção (Vercel), consome diretamente o arquivo estático /audio/playlist.json
+      // Em desenvolvimento local, utiliza /api/playlist do middleware Vite para detecção dinâmica
+      const primaryUrl = import.meta.env.DEV
+        ? `/api/playlist?t=${Date.now()}`
+        : `/audio/playlist.json?t=${Date.now()}`;
+
+      let res = await fetch(primaryUrl);
       if (!res.ok) {
         res = await fetch(`/audio/playlist.json?t=${Date.now()}`);
       }
