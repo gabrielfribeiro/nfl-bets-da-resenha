@@ -26,6 +26,17 @@ export default function ShareModal({ onClose }) {
   // Total Pot
   const totalPot = selectedTeamIds.reduce((sum, id) => sum + (teams[id]?.pot ?? 0), 0);
 
+  // Somatória dos ganhos em potencial da rodada
+  const totalPotentialProfit = roundBets.reduce((sum, b) => {
+    const { profit } = calculatePotentialReturn(b, powerUpsList);
+    return sum + profit;
+  }, 0);
+
+  const totalPotentialReturn = roundBets.reduce((sum, b) => {
+    const { total } = calculatePotentialReturn(b, powerUpsList);
+    return sum + total;
+  }, 0);
+
   // Text format for WhatsApp
   const generateWhatsAppText = () => {
     const betsText =
@@ -50,9 +61,7 @@ export default function ShareModal({ onClose }) {
               const badge = getMarketBadge(b);
               const badgeTag = badge ? ` [${badge.icon} ${badge.label}]` : "";
               const marketLine = b.marketDetails ? `\n   📌 *Palpite:* ${b.marketDetails}` : "";
-              const { profit, total } = calculatePotentialReturn(b, powerUpsList);
-              const returnText = ` | 💵 Retorno: R$ ${total.toFixed(2)} (+R$ ${profit.toFixed(2)})`;
-              return `👉 *${team?.name || "Time"}*${vsText}${badgeTag}${marketLine}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${returnText}${powerUpTag} -> ${status}`;
+              return `👉 *${team?.name || "Time"}*${vsText}${badgeTag}${marketLine}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${powerUpTag} -> ${status}`;
             })
             .join("\n")
         : "_Nenhuma aposta registrada nesta rodada._";
@@ -62,6 +71,7 @@ export default function ShareModal({ onClose }) {
 ━━━━━━━━━━━━━━━━━━━━
 📅 *Rodada #${selectedRound}*
 💰 *Pote Geral Acumulado:* R$ ${totalPot.toFixed(2)}
+💵 *Retorno Potencial da Rodada:* R$ ${totalPotentialReturn.toFixed(2)} (+R$ ${totalPotentialProfit.toFixed(2)} lucro)
 📊 *Resultado:* ${wonBets.length} Green ✅ | ${lossBets.length} Red ❌
 ━━━━━━━━━━━━━━━━━━━━
 🎯 *APOSTAS DA RODADA #${selectedRound}:*
@@ -177,21 +187,45 @@ Acompanhe os resultados no painel do bolão!`
             className="bg-gradient-to-br from-gray-950 via-gray-900 to-red-950/40 border-2 border-yellow-400/40 rounded-3xl p-5 shadow-2xl relative overflow-hidden w-full"
           >
             {/* Top header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">🏈</span>
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-red-500 block">
-                  NFL BETS DA RESENHA
-                </span>
-                <span className="text-white font-black text-base">Rodada #{selectedRound}</span>
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4 gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-2xl flex-shrink-0">🏈</span>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-red-500 block">
+                    NFL BETS DA RESENHA
+                  </span>
+                  <span className="text-white font-black text-base truncate block">Rodada #{selectedRound}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 text-right flex-shrink-0">
+                {/* Somatória dos Ganhos Potenciais da Rodada */}
+                {roundBets.length > 0 && (
+                  <div className="text-right">
+                    <span className="text-[10px] text-emerald-400/90 block uppercase font-bold tracking-tight">
+                      Retorno Potencial
+                    </span>
+                    <span className="text-emerald-400 font-black text-base block leading-tight">
+                      R$ {totalPotentialReturn.toFixed(2)}
+                    </span>
+                    <span className="text-[9px] text-emerald-500/90 font-semibold block">
+                      (+R$ {totalPotentialProfit.toFixed(2)} lucro)
+                    </span>
+                  </div>
+                )}
+
+                {/* Linha Divisória */}
+                {roundBets.length > 0 && (
+                  <div className="w-[1px] h-8 bg-white/15" />
+                )}
+
+                {/* Pote Geral */}
+                <div className="text-right">
+                  <span className="text-[10px] text-gray-400 block uppercase font-bold">Pote Geral</span>
+                  <span className="text-yellow-400 font-black text-lg block leading-tight">R$ {totalPot.toFixed(2)}</span>
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <span className="text-[10px] text-gray-400 block uppercase font-bold">Pote Geral</span>
-              <span className="text-yellow-400 font-black text-lg">R$ {totalPot.toFixed(2)}</span>
-            </div>
-          </div>
 
           {/* Round Bets List */}
           <div className="space-y-2.5 mb-4">
@@ -286,21 +320,6 @@ Acompanhe os resultados no painel do bolão!`
                           @{bet.odd.toFixed(2)}
                         </span>
                       </div>
-
-                      {/* Ganhos em Potencial */}
-                      {(() => {
-                        const { profit, total } = calculatePotentialReturn(bet, powerUpsList);
-                        return (
-                          <div className="mt-0.5 text-right">
-                            <span className="text-[10px] font-black text-emerald-400 block tracking-tight">
-                              💵 R$ {total.toFixed(2)}
-                              <span className="text-[9px] text-emerald-500/80 font-semibold ml-1">
-                                (+R$ {profit.toFixed(2)})
-                              </span>
-                            </span>
-                          </div>
-                        );
-                      })()}
                       <div className="mt-1">
                         {isWin && (
                           <span className="text-[10px] font-black uppercase text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
