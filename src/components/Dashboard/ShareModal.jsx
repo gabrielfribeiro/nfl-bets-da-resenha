@@ -3,7 +3,7 @@ import { toBlob, toPng } from "html-to-image";
 import { useBet } from "../../context/BetContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { sounds } from "../../utils/sound";
-import { getMarketDisplay } from "../../utils/markets";
+import { getMarketDisplay, getMarketBadge } from "../../utils/markets";
 
 export default function ShareModal({ onClose }) {
   const { currentRound, selectedTeamIds, teams, bets, maxOdd } = useBet();
@@ -47,9 +47,10 @@ export default function ShareModal({ onClose }) {
                   ? " [⚡ Turbo 2X]"
                   : "";
               const vsText = rival ? ` (vs ${rival.name})` : "";
-              const marketText = getMarketDisplay(b);
-              const marketLine = marketText ? `\n   🎯 *Palpite:* ${marketText}` : "";
-              return `👉 *${team?.name || "Time"}*${vsText}${marketLine}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${powerUpTag} -> ${status}`;
+              const badge = getMarketBadge(b);
+              const badgeTag = badge ? ` [${badge.icon} ${badge.label}]` : "";
+              const marketLine = b.marketDetails ? `\n   📌 *Palpite:* ${b.marketDetails}` : "";
+              return `👉 *${team?.name || "Time"}*${vsText}${badgeTag}${marketLine}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${powerUpTag} -> ${status}`;
             })
             .join("\n")
         : "_Nenhuma aposta registrada nesta rodada._";
@@ -236,6 +237,14 @@ Acompanhe os resultados no painel do bolão!`
                         }}
                       />
                       <div className="min-w-0">
+                        {/* Tag colorida do mercado com fundo escuro, igual ao histórico */}
+                        {getMarketBadge(bet) && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border bg-gray-950/80 ${getMarketBadge(bet).color}`}>
+                              {getMarketBadge(bet).icon} {getMarketBadge(bet).label}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5">
                           <span className="text-white font-black text-sm truncate block">
                             {team?.name || "Time"}
@@ -256,12 +265,11 @@ Acompanhe os resultados no painel do bolão!`
                             vs {rival.name}
                           </span>
                         )}
-                        {getMarketDisplay(bet) && (
-                          <div className="mt-1 flex items-center">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-yellow-300 bg-yellow-400/15 border border-yellow-400/30 px-1.5 py-0.5 rounded shadow-sm">
-                              🎯 {getMarketDisplay(bet)}
-                            </span>
-                          </div>
+                        {/* Palpite / linha escolhida abaixo do confronto */}
+                        {bet.marketDetails && (
+                          <span className="text-[11px] font-bold text-amber-200/95 block truncate mt-0.5">
+                            📌 {bet.marketDetails}
+                          </span>
                         )}
                       </div>
                     </div>
