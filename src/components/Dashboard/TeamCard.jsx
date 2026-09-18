@@ -135,7 +135,10 @@ export default function TeamCard({ teamId }) {
               <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
                 {team.conference} · {team.division}
               </span>
-              <span className={`text-xs px-1.5 py-0.5 rounded font-bold border ${tier.border} ${tier.bg} ${tier.color} flex items-center gap-1`}>
+              <span
+                title={`Patente da Resenha: ${tier.badge} ${tier.name} (R$ ${tier.min.toFixed(2)}+)\n"${tier.desc}"`}
+                className={`text-xs px-1.5 py-0.5 rounded font-bold border ${tier.border} ${tier.bg} ${tier.color} flex items-center gap-1 cursor-help`}
+              >
                 <span>{tier.badge}</span>
                 <span>{tier.name}</span>
               </span>
