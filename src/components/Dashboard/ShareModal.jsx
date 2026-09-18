@@ -22,27 +22,56 @@ export default function ShareModal({ onClose }) {
   const roundBets = bets.filter((b) => b.round === selectedRound);
   const wonBets = roundBets.filter((b) => b.result === "win");
   const lossBets = roundBets.filter((b) => b.result === "loss");
+  const pendingBets = roundBets.filter((b) => b.result === "pending");
 
   // Total Pot
   const totalPot = selectedTeamIds.reduce((sum, id) => sum + (teams[id]?.pot ?? 0), 0);
 
-  // Somatória dos ganhos em potencial da rodada
-  const totalPotentialProfit = roundBets.reduce((sum, b) => {
+  // Cálculos financeiros precisos da rodada (descontando valor apostado)
+  const roundTotalBet = roundBets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+  const pendingTotalBet = pendingBets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+
+  const wonProfit = wonBets.reduce((sum, b) => {
     const { profit } = calculatePotentialReturn(b, powerUpsList);
     return sum + profit;
   }, 0);
 
-  const pendingBets = roundBets.filter((b) => b.result === "pending");
+  const lostAmount = lossBets.reduce((sum, b) => {
+    if (b.powerUp === "shield") return sum;
+    return sum + (Number(b.amount) || 0);
+  }, 0);
+
+  const pendingReturn = pendingBets.reduce((sum, b) => {
+    const { total } = calculatePotentialReturn(b, powerUpsList);
+    return sum + total;
+  }, 0);
+
   const pendingProfit = pendingBets.reduce((sum, b) => {
     const { profit } = calculatePotentialReturn(b, powerUpsList);
     return sum + profit;
   }, 0);
 
-  const displayRoundProfit = roundBets.some((b) => b.result === "pending")
-    ? pendingProfit
-    : totalPotentialProfit;
+  const wonReturn = wonBets.reduce((sum, b) => {
+    const { total } = calculatePotentialReturn(b, powerUpsList);
+    return sum + total;
+  }, 0);
 
-  const projectedPot = totalPot + displayRoundProfit;
+  const hasPending = pendingBets.length > 0;
+  const isAllPending = hasPending && pendingBets.length === roundBets.length;
+
+  const displayReturn = hasPending
+    ? (isAllPending ? pendingReturn : wonReturn + pendingReturn)
+    : wonReturn;
+
+  const displayBet = hasPending
+    ? (isAllPending ? pendingTotalBet : roundTotalBet)
+    : roundTotalBet;
+
+  const displayRoundProfit = hasPending
+    ? (wonProfit - lostAmount + pendingProfit)
+    : (wonProfit - lostAmount);
+
+  const projectedPot = totalPot + (hasPending ? pendingProfit : 0);
 
   // Text format for WhatsApp
   const generateWhatsAppText = () => {
@@ -73,13 +102,17 @@ export default function ShareModal({ onClose }) {
             .join("\n")
         : "_Nenhuma aposta registrada nesta rodada._";
 
+    const profitSign = displayRoundProfit > 0 ? "+" : "";
+    const profitText = `${profitSign}R$ ${displayRoundProfit.toFixed(2)}`;
+
     return (
 `🏈 *NFL BETS DA RESENHA* 🏈
 ━━━━━━━━━━━━━━━━━━━━
 📅 *Rodada #${selectedRound}*
-💰 *Pote Geral:* R$ ${totalPot.toFixed(2)}
-📈 *Lucro Rodada:* +R$ ${displayRoundProfit.toFixed(2)}
-🎯 *Retorno Potencial:* R$ ${projectedPot.toFixed(2)}
+💰 *Pote Geral:* R$ ${totalPot.toFixed(2)}${hasPending ? ` (proj: R$ ${projectedPot.toFixed(2)})` : ""}
+💵 *Retorno Rodada:* R$ ${displayReturn.toFixed(2)}
+📉 *Total Apostado:* R$ ${displayBet.toFixed(2)}
+📈 *Lucro da Rodada:* ${profitText}
 📊 *Resultado:* ${wonBets.length} Green ✅ | ${lossBets.length} Red ❌
 ━━━━━━━━━━━━━━━━━━━━
 🎯 *APOSTAS DA RODADA #${selectedRound}:*
@@ -206,8 +239,8 @@ Acompanhe os resultados no painel do bolão!`
                 </div>
               </div>
 
-              {/* Barra Única Integrada de Valores */}
-              <div className="bg-gray-950/90 border border-white/10 rounded-2xl p-1.5 px-3 flex items-center gap-2.5 self-end sm:self-auto shadow-inner">
+              {/* Barra Única Integrada de Valores: Pote Geral | Retorno - Apostado = Lucro */}
+              <div className="bg-gray-950/90 border border-white/10 rounded-2xl p-1.5 px-3 flex items-center gap-2 self-end sm:self-auto shadow-inner flex-wrap sm:flex-nowrap justify-end">
                 {/* 1. Pote Geral */}
                 <div className="text-right">
                   <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">
@@ -218,28 +251,48 @@ Acompanhe os resultados no painel do bolão!`
                   </span>
                 </div>
 
-                {/* Sinal + */}
-                <span className="text-gray-500 font-bold text-xs">+</span>
+                {/* Divisória vertical separando o Pote Geral da Equação */}
+                <div className="w-[1px] h-6 bg-white/15 mx-0.5 hidden sm:block" />
 
-                {/* 2. Lucro Rodada */}
-                <div className="text-right">
-                  <span className="text-[9px] text-emerald-400/90 block uppercase font-bold tracking-wider">
-                    Lucro Rodada
-                  </span>
-                  <span className="text-emerald-400 font-black text-xs sm:text-sm block leading-tight">
-                    +R$ {displayRoundProfit.toFixed(2)}
-                  </span>
-                </div>
-
-                {/* Divisória com = e Retorno Potencial */}
-                <div className="flex items-center gap-2 pl-2 border-l border-white/15">
-                  <span className="text-emerald-500/80 font-bold text-xs">=</span>
+                {/* 2. Equação da Rodada: Retorno - Apostado = Lucro */}
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  {/* Retorno */}
                   <div className="text-right">
-                    <span className="text-[9px] text-emerald-300 block uppercase font-black tracking-wider">
-                      Retorno Potencial
+                    <span className="text-[9px] text-emerald-400/90 block uppercase font-bold tracking-wider">
+                      Retorno
                     </span>
-                    <span className="text-emerald-400 font-black text-sm sm:text-base block leading-tight">
-                      R$ {projectedPot.toFixed(2)}
+                    <span className="text-emerald-400 font-black text-xs sm:text-sm block leading-tight">
+                      R$ {displayReturn.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Sinal - */}
+                  <span className="text-rose-400/90 font-bold text-xs">-</span>
+
+                  {/* Apostado */}
+                  <div className="text-right">
+                    <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">
+                      Apostado
+                    </span>
+                    <span className="text-gray-200 font-black text-xs sm:text-sm block leading-tight">
+                      R$ {displayBet.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Sinal = */}
+                  <span className="text-gray-400 font-bold text-xs">=</span>
+
+                  {/* Lucro Rodada */}
+                  <div className="text-right pl-0.5">
+                    <span className={`text-[9px] block uppercase font-black tracking-wider ${
+                      displayRoundProfit > 0 ? "text-emerald-300" : displayRoundProfit < 0 ? "text-rose-300" : "text-gray-400"
+                    }`}>
+                      Lucro
+                    </span>
+                    <span className={`font-black text-xs sm:text-sm block leading-tight ${
+                      displayRoundProfit > 0 ? "text-emerald-400" : displayRoundProfit < 0 ? "text-rose-400" : "text-gray-300"
+                    }`}>
+                      {displayRoundProfit > 0 ? `+R$ ${displayRoundProfit.toFixed(2)}` : `R$ ${displayRoundProfit.toFixed(2)}`}
                     </span>
                   </div>
                 </div>
