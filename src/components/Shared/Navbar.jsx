@@ -124,7 +124,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <button
               onClick={() => setActiveTab("dashboard")}
-              className="flex items-center gap-3 text-left group flex-shrink-0"
+              className="hidden sm:flex items-center gap-3 text-left group flex-shrink-0"
             >
               <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-500 flex items-center justify-center text-xl shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
                 🏈
