@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { calculateTeamStreak } from "../../utils/streaks";
-import { getTier } from "../../utils/tiers";
+import { getTier, getNextTier } from "../../utils/tiers";
 
 export default function LeaderboardTable({ selectedTeamIds, teams, bets, currentRound }) {
   const [sortField, setSortField] = useState("pot"); // 'pot' | 'wins' | 'winRate' | 'streak' | 'addedFunds'
@@ -32,6 +32,7 @@ export default function LeaderboardTable({ selectedTeamIds, teams, bets, current
         addedFunds: teamState.addedFunds || 0,
         streak,
         tier: getTier(teamState.pot),
+        nextTier: getNextTier(teamState.pot),
       };
     });
 
@@ -393,14 +394,103 @@ export default function LeaderboardTable({ selectedTeamIds, teams, bets, current
                       </div>
                     </td>
 
-                    {/* Pot */}
+                    {/* Pot & Resenha Tier */}
                     <td className="py-3 px-3 text-right">
-                      <span className="text-yellow-400 font-black text-sm block">
+                      <span className="text-yellow-400 font-black text-sm block tabular-nums">
                         R$ {item.pot.toFixed(2)}
                       </span>
-                      <span className={`text-[10px] font-bold ${item.tier.color}`}>
-                        {item.tier.badge} {item.tier.name}
-                      </span>
+                      <div className="relative inline-block group/tier">
+                        <button
+                          type="button"
+                          title={`Patente da Resenha: ${item.tier.badge} ${item.tier.name} (R$ ${item.tier.min.toFixed(2)}+)\n"${item.tier.desc}"${
+                            item.nextTier
+                              ? `\nPróxima: ${item.nextTier.badge} ${item.nextTier.name} (Falta R$ ${Math.max(0, item.nextTier.min - item.pot).toFixed(2)})`
+                              : "\nPatente Máxima atingida!"
+                          }`}
+                          className={`text-[10px] font-extrabold ${item.tier.color} inline-flex items-center gap-1 cursor-help hover:brightness-125 transition-all`}
+                        >
+                          <span className="text-xs">{item.tier.badge}</span>
+                          <span className="underline decoration-dotted decoration-gray-500/60 underline-offset-2">
+                            {item.tier.name}
+                          </span>
+                        </button>
+
+                        {/* Floating Tooltip on Hover */}
+                        <div
+                          className={`absolute right-0 ${
+                            item.currentRank <= 2 ? "top-full mt-2" : "bottom-full mb-2"
+                          } hidden group-hover/tier:flex flex-col w-64 p-3 bg-gray-950/95 backdrop-blur-md border border-gray-700/80 rounded-2xl shadow-2xl z-50 text-left pointer-events-none animate-in fade-in zoom-in-95 duration-150`}
+                        >
+                          {/* Header */}
+                          <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-800">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-xl">{item.tier.badge}</span>
+                              <div className="min-w-0">
+                                <p className="text-xs font-black text-white truncate">
+                                  {item.tier.name}
+                                </p>
+                                <p className="text-[10px] font-bold text-yellow-400">
+                                  Pote a partir de R$ {item.tier.min.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 px-1.5 py-0.5 rounded-full">
+                              Patente
+                            </span>
+                          </div>
+
+                          {/* Description */}
+                          <p className="text-[11px] text-gray-300 italic mt-2 leading-relaxed">
+                            "{item.tier.desc}"
+                          </p>
+
+                          {/* Next Tier Progress */}
+                          {item.nextTier ? (
+                            <div className="mt-2.5 pt-2 border-t border-gray-800/80">
+                              <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 mb-1">
+                                <span>Próxima: {item.nextTier.badge} {item.nextTier.name}</span>
+                                <span className={item.pot <= 0 ? "text-rose-400 font-black" : "text-emerald-400 tabular-nums font-black"}>
+                                  {item.pot <= 0
+                                    ? "Ative um Salva-Vidas!"
+                                    : `Falta R$ ${Math.max(0, item.nextTier.min - item.pot).toFixed(2)}`}
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    item.pot <= 0
+                                      ? "bg-rose-500 w-0"
+                                      : "bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400"
+                                  }`}
+                                  style={{
+                                    width: item.pot <= 0 ? "0%" : `${Math.min(
+                                      100,
+                                      Math.max(
+                                        8,
+                                        ((item.pot - item.tier.min) /
+                                          (item.nextTier.min - item.tier.min)) *
+                                          100
+                                      )
+                                    )}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2.5 pt-2 border-t border-gray-800/80 text-[10px] text-amber-300 font-black flex items-center gap-1.5">
+                              <span>👑</span>
+                              <span>Patente Máxima da Resenha conquistada!</span>
+                            </div>
+                          )}
+
+                          {/* Tip */}
+                          <p className="text-[9px] text-gray-500 mt-2">
+                            {item.pot <= 0
+                              ? "⚠️ Time zerado! Precisa acionar o Salva-Vidas para voltar a pontuar."
+                              : "💡 As patentes sobem automaticamente conforme o time ganha apostas e acumula saldo!"}
+                          </p>
+                        </div>
+                      </div>
                     </td>
 
                     {/* Streak */}

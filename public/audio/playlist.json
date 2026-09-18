@@ -26,5 +26,12 @@
     "title": "Rock Da Resenha",
     "emoji": "🎸",
     "src": "/audio/rock-da-resenha.mp3"
+  },
+  {
+    "id": "track-4-samba-do-zicador-mp3",
+    "filename": "samba-do-zicador.mp3",
+    "title": "Samba Do Zicador",
+    "emoji": "🪕",
+    "src": "/audio/samba-do-zicador.mp3"
   }
 ]

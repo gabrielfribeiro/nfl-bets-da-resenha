@@ -3,6 +3,7 @@ import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { NFL_TEAMS, getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { sounds } from "../../utils/sound";
+import { BET_MARKETS } from "../../utils/markets";
 import MatchupModal from "./MatchupModal";
 
 export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
@@ -16,6 +17,8 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
   const [odd, setOdd] = useState("1.5");
   const [result, setResult] = useState("pending");
   const [selectedPowerUp, setSelectedPowerUp] = useState(null); // 'shield' | 'double' | null
+  const [marketType, setMarketType] = useState("moneyline");
+  const [marketDetails, setMarketDetails] = useState("");
   const [isFlipping, setIsFlipping] = useState(false);
   const [coinWinner, setCoinWinner] = useState(null);
   const [coinLocked, setCoinLocked] = useState(false);
@@ -103,6 +106,8 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
       result,
       round: parseInt(round) || currentRound,
       powerUp: selectedPowerUp,
+      marketType,
+      marketDetails: marketDetails.trim() || (marketType === "moneyline" ? "Vitória (Moneyline)" : ""),
       note,
     });
     // Reset form
@@ -113,6 +118,8 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
     setOdd("1.5");
     setResult("pending");
     setSelectedPowerUp(null);
+    setMarketType("moneyline");
+    setMarketDetails("");
     setCoinLocked(false);
     setCoinWinner(null);
     setNote("");
@@ -399,18 +406,108 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
             )}
           </div>
 
-          {/* Power-ups Section */}
-          <div className="bg-gray-900/90 border border-gray-800 rounded-3xl p-5 shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest">
-                Cartas de Poder (Opcional)
-              </h3>
-              <span className="text-[11px] text-yellow-400 font-semibold">Uso limitado</span>
+          {/* Market / Bet Type Section */}
+          <div className="bg-gray-900/90 border border-gray-800 rounded-3xl p-5 shadow-xl space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <span>🎯</span>
+                  <span>No que você apostou? (Mercado & Palpite)</span>
+                </h3>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  Escolha o tipo de aposta para sair destacado no Card da Resenha.
+                </p>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 px-2 py-0.5 rounded-full">
+                {BET_MARKETS.find((m) => m.id === marketType)?.badge || "Mercado"}
+              </span>
             </div>
 
-            {(!powerUpsList || powerUpsList.filter((p) => p.enabled).length === 0) ? (
-              <p className="text-gray-500 text-xs italic">Nenhuma carta de poder ativa no momento.</p>
-            ) : (
+            {/* Quick Market Pills Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {BET_MARKETS.map((m) => {
+                const isSelected = marketType === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      setMarketType(m.id);
+                      if (m.id === "moneyline") {
+                        setMarketDetails("");
+                      } else if (!marketDetails || BET_MARKETS.some((other) => other.id !== m.id && other.defaultDetail === marketDetails)) {
+                        setMarketDetails(m.defaultDetail || "");
+                      }
+                    }}
+                    className={`p-2.5 rounded-2xl border-2 text-left transition-all flex flex-col justify-between gap-1 ${
+                      isSelected
+                        ? `bg-gradient-to-br ${m.color} border-current shadow-lg`
+                        : "bg-gray-950/60 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white"
+                    }`}
+                  >
+                    <span className="text-lg leading-none">{m.icon}</span>
+                    <div>
+                      <p className="font-black text-xs leading-tight">{m.label}</p>
+                      <span className="text-[9px] opacity-75 font-semibold block">{m.badge}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Specific Market Details & Quick Chips */}
+            {marketType !== "moneyline" && (
+              <div className="p-3.5 bg-gray-950/70 border border-gray-800/80 rounded-2xl space-y-2.5 animate-in fade-in duration-150">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[11px] font-bold text-gray-300 flex items-center gap-1.5">
+                    <span>{BET_MARKETS.find((m) => m.id === marketType)?.icon}</span>
+                    <span>Detalhe da Linha / Palpite:</span>
+                  </label>
+                  <span className="text-[10px] text-gray-500 font-semibold">Exibido no Card da Resenha</span>
+                </div>
+
+                <input
+                  type="text"
+                  value={marketDetails}
+                  onChange={(e) => setMarketDetails(e.target.value)}
+                  placeholder={BET_MARKETS.find((m) => m.id === marketType)?.placeholder}
+                  className="w-full h-10 bg-gray-900 border border-gray-700 focus:border-yellow-400 rounded-xl px-3 text-white text-xs font-bold focus:outline-none transition-colors"
+                />
+
+                {/* Quick Chips suggestions */}
+                {BET_MARKETS.find((m) => m.id === marketType)?.chips?.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                    <span className="text-[10px] text-gray-500 font-semibold">Sugestões rápidas:</span>
+                    {BET_MARKETS.find((m) => m.id === marketType).chips.map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => setMarketDetails(chip)}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-all ${
+                          marketDetails === chip
+                            ? "bg-yellow-400 text-gray-950 border-yellow-400 font-black shadow"
+                            : "bg-gray-900 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white"
+                        }`}
+                      >
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Power-ups Section (only shown if there is at least one active power-up) */}
+          {powerUpsList && powerUpsList.some((power) => power.enabled) && (
+            <div className="bg-gray-900/90 border border-gray-800 rounded-3xl p-5 shadow-xl">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest">
+                  Cartas de Poder (Opcional)
+                </h3>
+                <span className="text-[11px] text-yellow-400 font-semibold">Uso limitado</span>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {powerUpsList
                   .filter((power) => power.enabled)
@@ -454,8 +551,8 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
                     );
                   })}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: Bet Values, Result & Submit (5 cols) */}
@@ -619,6 +716,22 @@ export default function NewBet({ initialMatchup, onClearInitialMatchup }) {
               <span>
                 Seu acesso está suspenso pelo Comissário da liga. Você não pode registrar apostas no momento.
               </span>
+            </div>
+          )}
+
+          {/* Bet Summary Preview */}
+          {bettingOnTeamId && (
+            <div className="p-3.5 bg-gray-950/80 border border-gray-800 rounded-2xl space-y-1.5 text-xs">
+              <div className="flex items-center justify-between text-gray-400">
+                <span>Time Apostado:</span>
+                <span className="text-white font-bold">{teams[bettingOnTeamId]?.name || getTeamById(bettingOnTeamId)?.name}</span>
+              </div>
+              <div className="flex items-center justify-between text-gray-400">
+                <span>Mercado / Palpite:</span>
+                <span className="text-yellow-400 font-black truncate max-w-[200px]">
+                  {marketDetails?.trim() || (marketType === "moneyline" ? "Vitória (Moneyline)" : BET_MARKETS.find((m) => m.id === marketType)?.label)}
+                </span>
+              </div>
             </div>
           )}
 

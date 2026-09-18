@@ -119,12 +119,12 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     <>
       {/* Top bar (Header Glassmorphism Full Width) */}
       <header className="bg-gray-950/85 backdrop-blur-md border-b border-white/10 sticky top-0 z-40 transition-all">
-        <div className="w-full px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
+        <div className="w-full px-3 sm:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
           {/* Brand / Logo + NFL Round */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
             <button
               onClick={() => setActiveTab("dashboard")}
-              className="flex items-center gap-3 text-left group flex-shrink-0"
+              className="hidden sm:flex items-center gap-3 text-left group flex-shrink-0"
             >
               <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-500 flex items-center justify-center text-xl shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
                 🏈
@@ -154,6 +154,19 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               <span className="hidden sm:inline">Semana #{currentRound}</span>
               <span className="sm:hidden">Sem. #{currentRound}</span>
             </button>
+
+            {/* Mobile Live games indicator dot (blinking, without text) */}
+            {liveGamesCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("games")}
+                title={`${liveGamesCount} jogo(s) ao vivo - Ver Jogos`}
+                className="w-9 h-11 rounded-xl bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 flex sm:hidden items-center justify-center transition-all shadow-md shadow-red-600/20 active:scale-95 flex-shrink-0 relative"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping absolute" />
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 relative shadow-sm shadow-red-500" />
+              </button>
+            )}
 
             {/* Cloud Status Badge */}
             <button
@@ -188,12 +201,12 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
             </button>
           </div>
 
-          {/* Center: Live games indicator pulse */}
+          {/* Center: Live games indicator pulse (Desktop/Tablet only) */}
           {liveGamesCount > 0 && (
             <button
               type="button"
               onClick={() => setActiveTab("games")}
-              className="h-11 px-4 rounded-xl bg-red-600/20 border border-red-500/50 text-red-400 hover:text-white text-xs sm:text-sm font-black flex items-center gap-2 hover:bg-red-600/30 transition-all shadow-md shadow-red-600/20 animate-pulse flex-shrink-0"
+              className="h-11 px-4 rounded-xl bg-red-600/20 border border-red-500/50 text-red-400 hover:text-white text-xs sm:text-sm font-black hidden sm:flex items-center gap-2 hover:bg-red-600/30 transition-all shadow-md shadow-red-600/20 animate-pulse flex-shrink-0"
             >
               <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
               <span>{liveGamesCount} Ao Vivo</span>

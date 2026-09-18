@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
+import { getMarketBadge, getMarketDisplay, calculatePotentialReturn } from "../../utils/markets";
+import EditBetModal from "./EditBetModal";
 
 const RESULT_CONFIG = {
   win: {
@@ -34,7 +36,7 @@ const RESULT_CONFIG = {
 };
 
 export default function BetHistory({ onOpenNewBet }) {
-  const { bets, updateBetResult, reopenBet, deleteBet, currentRound } = useBet();
+  const { bets, updateBetResult, reopenBet, deleteBet, currentRound, powerUpsList } = useBet();
   const { canManageBets, isAdmin } = useAuth();
 
   // Filters State
@@ -46,6 +48,7 @@ export default function BetHistory({ onOpenNewBet }) {
   const [sortBy, setSortBy] = useState("newest"); // 'newest' | 'oldest' | 'odd_desc' | 'amount_desc' | 'profit_desc'
   const [viewMode, setViewMode] = useState("timeline"); // 'timeline' | 'list'
   const [expandedId, setExpandedId] = useState(null);
+  const [editingBet, setEditingBet] = useState(null);
 
   // Teams with at least one bet
   const uniqueTeams = useMemo(() => {
@@ -215,6 +218,40 @@ export default function BetHistory({ onOpenNewBet }) {
         };
       });
   }, [filteredBets]);
+
+  // Accordion state: por padrão, apenas a semana atual (currentRound) inicia aberta
+  const [openRounds, setOpenRounds] = useState(() => new Set([Number(currentRound) || 1]));
+
+  useEffect(() => {
+    if (currentRound) {
+      setOpenRounds((prev) => {
+        const next = new Set(prev);
+        next.add(Number(currentRound));
+        return next;
+      });
+    }
+  }, [currentRound]);
+
+  const toggleRound = (roundNum) => {
+    setOpenRounds((prev) => {
+      const next = new Set(prev);
+      if (next.has(roundNum)) {
+        next.delete(roundNum);
+      } else {
+        next.add(roundNum);
+      }
+      return next;
+    });
+  };
+
+  const expandAllRounds = () => {
+    const all = new Set(groupedByRound.map((g) => g.round));
+    setOpenRounds(all);
+  };
+
+  const collapseAllRounds = () => {
+    setOpenRounds(new Set());
+  };
 
   const hasActiveFilters =
     filterResult !== "all" ||
@@ -597,66 +634,131 @@ export default function BetHistory({ onOpenNewBet }) {
           </button>
         </div>
       ) : viewMode === "timeline" ? (
-        // Modo Linha do Tempo (Agrupado por Rodada)
-        <div className="space-y-6">
-          {groupedByRound.map((roundGroup) => (
-            <div
-              key={roundGroup.round}
-              className="bg-gray-900/60 border border-gray-800 rounded-3xl p-5 shadow-xl space-y-4"
-            >
-              {/* Round Header Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-800">
-                <div className="flex items-center gap-3">
-                  <span className="w-10 h-10 rounded-2xl bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 font-black text-sm flex items-center justify-center shadow-inner">
-                    #{roundGroup.round}
-                  </span>
-                  <div>
-                    <h3 className="text-white font-black text-base">
-                      Semana #{roundGroup.round}
-                    </h3>
-                    <p className="text-gray-400 text-xs">
-                      {roundGroup.bets.length} palpite{roundGroup.bets.length > 1 ? "s" : ""} •{" "}
-                      <span className="text-emerald-400 font-bold">{roundGroup.wins} Greens</span> •{" "}
-                      <span className="text-red-400 font-bold">{roundGroup.losses} Reds</span>
-                      {roundGroup.pending > 0 && (
-                        <span className="text-amber-400 font-bold"> • {roundGroup.pending} Pendentes</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="text-left sm:text-right">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase block">
-                    Saldo da Rodada
-                  </span>
-                  <span
-                    className={`font-black text-sm sm:text-base ${
-                      roundGroup.profit >= 0 ? "text-emerald-400" : "text-red-400"
-                    }`}
-                  >
-                    {roundGroup.profit >= 0 ? "+" : ""}R$ {roundGroup.profit.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Cards Grid in this Round */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {roundGroup.bets.map((bet) => (
-                  <BetTicketCard
-                    key={bet.id}
-                    bet={bet}
-                    isExpanded={expandedId === bet.id}
-                    onToggle={() => setExpandedId(expandedId === bet.id ? null : bet.id)}
-                    onUpdateResult={updateBetResult}
-                    onReopen={reopenBet}
-                    onDelete={deleteBet}
-                    canManage={canManageBets}
-                    isAdmin={isAdmin}
-                  />
-                ))}
-              </div>
+        // Modo Linha do Tempo em Accordion por Rodada
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1 text-xs text-gray-400">
+            <span className="font-bold flex items-center gap-1.5">
+              <span>📅</span>
+              <span>Semanas da Temporada (Accordion)</span>
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={expandAllRounds}
+                className="text-yellow-400 hover:text-yellow-300 font-semibold transition-colors"
+              >
+                Expandir Todas
+              </button>
+              <span className="text-gray-700">•</span>
+              <button
+                type="button"
+                onClick={collapseAllRounds}
+                className="text-gray-400 hover:text-gray-200 font-semibold transition-colors"
+              >
+                Recolher Todas
+              </button>
             </div>
-          ))}
+          </div>
+
+          {groupedByRound.map((roundGroup) => {
+            const isOpen = openRounds.has(roundGroup.round);
+            const isCurrent = Number(currentRound) === Number(roundGroup.round);
+
+            return (
+              <div
+                key={roundGroup.round}
+                className={`bg-gray-900/60 border rounded-3xl transition-all shadow-xl overflow-hidden ${
+                  isOpen ? "border-gray-800" : "border-gray-800/60 hover:border-gray-700/80"
+                }`}
+              >
+                {/* Accordion Header (Clicável para expandir/recolher) */}
+                <button
+                  type="button"
+                  onClick={() => toggleRound(roundGroup.round)}
+                  className="w-full p-4 sm:p-5 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors hover:bg-gray-850/40 select-none"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className={`w-10 h-10 rounded-2xl border font-black text-sm flex items-center justify-center flex-shrink-0 shadow-inner ${
+                        isCurrent
+                          ? "bg-yellow-400 text-gray-950 border-yellow-400 font-black shadow-yellow-400/20"
+                          : "bg-yellow-400/10 border-yellow-400/30 text-yellow-400"
+                      }`}
+                    >
+                      #{roundGroup.round}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-white font-black text-base truncate">
+                          Semana #{roundGroup.round}
+                        </h3>
+                        {isCurrent && (
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 border border-yellow-400/40">
+                            Semana Atual
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-400 text-xs truncate">
+                        {roundGroup.bets.length} palpite{roundGroup.bets.length > 1 ? "s" : ""} •{" "}
+                        <span className="text-emerald-400 font-bold">{roundGroup.wins} Greens</span> •{" "}
+                        <span className="text-red-400 font-bold">{roundGroup.losses} Reds</span>
+                        {roundGroup.pending > 0 && (
+                          <span className="text-amber-400 font-bold"> • {roundGroup.pending} Pendentes</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-4 flex-shrink-0">
+                    <div className="text-left sm:text-right">
+                      <span className="text-[10px] text-gray-500 font-bold uppercase block">
+                        Saldo da Rodada
+                      </span>
+                      <span
+                        className={`font-black text-sm sm:text-base block ${
+                          roundGroup.profit >= 0 ? "text-emerald-400" : "text-red-400"
+                        }`}
+                      >
+                        {roundGroup.profit >= 0 ? "+" : ""}R$ {roundGroup.profit.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Ícone Chevron do Accordion */}
+                    <div
+                      className={`w-8 h-8 rounded-full bg-gray-950 border border-gray-800 flex items-center justify-center text-xs text-gray-400 transition-transform duration-200 ${
+                        isOpen ? "rotate-180 text-yellow-400 border-yellow-400/30" : ""
+                      }`}
+                    >
+                      ▼
+                    </div>
+                  </div>
+                </button>
+
+                {/* Conteúdo Expansível: Grid de Apostas da Rodada */}
+                {isOpen && (
+                  <div className="p-5 pt-0 border-t border-gray-800/80 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                      {roundGroup.bets.map((bet) => (
+                        <BetTicketCard
+                          key={bet.id}
+                          bet={bet}
+                          isExpanded={expandedId === bet.id}
+                          onToggle={() => setExpandedId(expandedId === bet.id ? null : bet.id)}
+                          onUpdateResult={updateBetResult}
+                          onReopen={reopenBet}
+                          onDelete={deleteBet}
+                          onEdit={setEditingBet}
+                          canManage={canManageBets}
+                          isAdmin={isAdmin}
+                          powerUpsList={powerUpsList}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         // Modo Lista Corrida (Grid 2 colunas)
@@ -670,11 +772,21 @@ export default function BetHistory({ onOpenNewBet }) {
               onUpdateResult={updateBetResult}
               onReopen={reopenBet}
               onDelete={deleteBet}
+              onEdit={setEditingBet}
               canManage={canManageBets}
               isAdmin={isAdmin}
+              powerUpsList={powerUpsList}
             />
           ))}
         </div>
+      )}
+
+      {/* Modal de Edição (Exclusivo Comissário) */}
+      {editingBet && (
+        <EditBetModal
+          bet={editingBet}
+          onClose={() => setEditingBet(null)}
+        />
       )}
     </div>
   );
@@ -687,8 +799,10 @@ function BetTicketCard({
   onUpdateResult,
   onReopen,
   onDelete,
+  onEdit,
   canManage,
   isAdmin,
+  powerUpsList,
 }) {
   const teamA = getTeamById(bet.teamAId);
   const teamB = getTeamById(bet.teamBId);
@@ -701,7 +815,7 @@ function BetTicketCard({
   const potDiffColor =
     potDiff > 0 ? "text-emerald-400" : potDiff < 0 ? "text-red-400" : "text-gray-400";
 
-  const potentialReturn = (bet.amount * (bet.odd || 1)).toFixed(2);
+  const potential = calculatePotentialReturn(bet, powerUpsList);
   const isProtectedByShield = bet.result === "loss" && bet.powerUp === "shield";
 
   return (
@@ -805,18 +919,33 @@ function BetTicketCard({
               }}
             />
             <div className="min-w-0">
-              <span className="text-[10px] font-black text-yellow-400 uppercase tracking-wider block">
-                🎯 Palpite Selecionado
-              </span>
-              <span className="text-white font-black text-sm truncate block">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-black text-yellow-400 uppercase tracking-wider block">
+                  🎯 Palpite Selecionado
+                </span>
+                {getMarketBadge(bet) && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border bg-gray-950/80 ${getMarketBadge(bet).color}`}>
+                    {getMarketBadge(bet).icon} {getMarketBadge(bet).label}
+                  </span>
+                )}
+              </div>
+              <span className="text-white font-black text-sm truncate block mt-0.5">
                 {bettingOn?.name || bet.bettingOnTeamId}
               </span>
+              {bet.marketDetails && (
+                <span className="text-xs font-semibold text-amber-200/90 block truncate mt-0.5">
+                  📌 {bet.marketDetails}
+                </span>
+              )}
             </div>
           </div>
 
           <div className="text-right flex-shrink-0">
             <span className="text-[10px] text-gray-400 font-bold block">Odd</span>
-            <span className="text-yellow-400 font-black text-base">@{bet.odd}</span>
+            <span className="text-yellow-400 font-black text-base leading-tight">@{bet.odd}</span>
+            <span className="text-[10px] font-black text-emerald-400 block mt-0.5" title="Retorno Potencial">
+              💵 R$ {potential.total.toFixed(2)}
+            </span>
           </div>
         </div>
 
@@ -837,9 +966,12 @@ function BetTicketCard({
           </div>
 
           <div className="bg-gray-950/60 border border-gray-800/80 rounded-xl p-2.5">
-            <span className="text-[10px] text-gray-400 block font-semibold">Retorno Potencial</span>
+            <span className="text-[10px] text-gray-400 block font-semibold">Ganhos em Potencial</span>
             <span className="text-emerald-400 font-black text-xs sm:text-sm block mt-0.5 truncate">
-              R$ {potentialReturn}
+              R$ {potential.total.toFixed(2)}
+            </span>
+            <span className="text-[9px] text-emerald-500/90 font-bold block truncate mt-0.5">
+              +R$ {potential.profit.toFixed(2)} lucro{potential.multiplier > 1 ? ` (⚡${potential.multiplier}X)` : ""}
             </span>
           </div>
 
@@ -952,8 +1084,8 @@ function BetTicketCard({
           </div>
         )}
 
-        {/* Ações: Resolução (Comissários e Moderadores) / Reabertura e Exclusão (Exclusivo Comissário) */}
-        {((bet.result === "pending" && canManage) || (bet.result !== "pending" && isAdmin)) && (
+        {/* Ações: Resolução (Comissários e Moderadores) / Reabertura, Edição e Exclusão (Exclusivo Comissário) */}
+        {((bet.result === "pending" && canManage) || isAdmin) && (
           <div className="pt-2 border-t border-gray-800/80 flex items-center gap-2 flex-wrap">
             {bet.result === "pending" ? (
               <>
@@ -990,9 +1122,22 @@ function BetTicketCard({
                   className="flex-1 py-1.5 px-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-yellow-400/30 font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <span>↩️</span>
-                  <span>Reabrir Palpite (Voltar a Pendente)</span>
+                  <span>Reabrir Palpite</span>
                 </button>
               )
+            )}
+
+            {/* Ajuste restrito exclusivamente ao Comissário */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => onEdit(bet)}
+                title="Ajustar dados desta aposta (Exclusivo Comissário)"
+                className="py-1.5 px-3 rounded-xl bg-yellow-400/15 hover:bg-yellow-400/30 text-yellow-300 border border-yellow-400/40 font-black text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm flex-shrink-0"
+              >
+                <span>✏️</span>
+                <span>Ajustar</span>
+              </button>
             )}
 
             {/* Exclusão restrita exclusivamente ao Comissário */}

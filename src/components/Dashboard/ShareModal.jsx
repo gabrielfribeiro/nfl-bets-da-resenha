@@ -3,9 +3,10 @@ import { toBlob, toPng } from "html-to-image";
 import { useBet } from "../../context/BetContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { sounds } from "../../utils/sound";
+import { getMarketDisplay, getMarketBadge, calculatePotentialReturn } from "../../utils/markets";
 
 export default function ShareModal({ onClose }) {
-  const { currentRound, selectedTeamIds, teams, bets, maxOdd } = useBet();
+  const { currentRound, selectedTeamIds, teams, bets, maxOdd, powerUpsList } = useBet();
   const [copied, setCopied] = useState(false);
   const [imageCopied, setImageCopied] = useState(false);
   const [isCopyingImage, setIsCopyingImage] = useState(false);
@@ -21,9 +22,56 @@ export default function ShareModal({ onClose }) {
   const roundBets = bets.filter((b) => b.round === selectedRound);
   const wonBets = roundBets.filter((b) => b.result === "win");
   const lossBets = roundBets.filter((b) => b.result === "loss");
+  const pendingBets = roundBets.filter((b) => b.result === "pending");
 
   // Total Pot
   const totalPot = selectedTeamIds.reduce((sum, id) => sum + (teams[id]?.pot ?? 0), 0);
+
+  // Cálculos financeiros precisos da rodada (descontando valor apostado)
+  const roundTotalBet = roundBets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+  const pendingTotalBet = pendingBets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+
+  const wonProfit = wonBets.reduce((sum, b) => {
+    const { profit } = calculatePotentialReturn(b, powerUpsList);
+    return sum + profit;
+  }, 0);
+
+  const lostAmount = lossBets.reduce((sum, b) => {
+    if (b.powerUp === "shield") return sum;
+    return sum + (Number(b.amount) || 0);
+  }, 0);
+
+  const pendingReturn = pendingBets.reduce((sum, b) => {
+    const { total } = calculatePotentialReturn(b, powerUpsList);
+    return sum + total;
+  }, 0);
+
+  const pendingProfit = pendingBets.reduce((sum, b) => {
+    const { profit } = calculatePotentialReturn(b, powerUpsList);
+    return sum + profit;
+  }, 0);
+
+  const wonReturn = wonBets.reduce((sum, b) => {
+    const { total } = calculatePotentialReturn(b, powerUpsList);
+    return sum + total;
+  }, 0);
+
+  const hasPending = pendingBets.length > 0;
+  const isAllPending = hasPending && pendingBets.length === roundBets.length;
+
+  const displayReturn = hasPending
+    ? (isAllPending ? pendingReturn : wonReturn + pendingReturn)
+    : wonReturn;
+
+  const displayBet = hasPending
+    ? (isAllPending ? pendingTotalBet : roundTotalBet)
+    : roundTotalBet;
+
+  const displayRoundProfit = hasPending
+    ? (wonProfit - lostAmount + pendingProfit)
+    : (wonProfit - lostAmount);
+
+  const projectedPot = totalPot + (hasPending ? pendingProfit : 0);
 
   // Text format for WhatsApp
   const generateWhatsAppText = () => {
@@ -46,16 +94,25 @@ export default function ShareModal({ onClose }) {
                   ? " [⚡ Turbo 2X]"
                   : "";
               const vsText = rival ? ` (vs ${rival.name})` : "";
-              return `👉 *${team?.name || "Time"}*${vsText}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${powerUpTag} -> ${status}`;
+              const badge = getMarketBadge(b);
+              const badgeTag = badge ? ` [${badge.icon} ${badge.label}]` : "";
+              const marketLine = b.marketDetails ? `\n   📌 *Palpite:* ${b.marketDetails}` : "";
+              return `👉 *${team?.name || "Time"}*${vsText}${badgeTag}${marketLine}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${powerUpTag} -> ${status}`;
             })
             .join("\n")
         : "_Nenhuma aposta registrada nesta rodada._";
+
+    const profitSign = displayRoundProfit > 0 ? "+" : "";
+    const profitText = `${profitSign}R$ ${displayRoundProfit.toFixed(2)}`;
 
     return (
 `🏈 *NFL BETS DA RESENHA* 🏈
 ━━━━━━━━━━━━━━━━━━━━
 📅 *Rodada #${selectedRound}*
-💰 *Pote Geral Acumulado:* R$ ${totalPot.toFixed(2)}
+💰 *Pote Geral:* R$ ${totalPot.toFixed(2)}${hasPending ? ` (proj: R$ ${projectedPot.toFixed(2)})` : ""}
+💵 *Retorno Rodada:* R$ ${displayReturn.toFixed(2)}
+📉 *Total Apostado:* R$ ${displayBet.toFixed(2)}
+📈 *Lucro da Rodada:* ${profitText}
 📊 *Resultado:* ${wonBets.length} Green ✅ | ${lossBets.length} Red ❌
 ━━━━━━━━━━━━━━━━━━━━
 🎯 *APOSTAS DA RODADA #${selectedRound}:*
@@ -171,21 +228,93 @@ Acompanhe os resultados no painel do bolão!`
             className="bg-gradient-to-br from-gray-950 via-gray-900 to-red-950/40 border-2 border-yellow-400/40 rounded-3xl p-5 shadow-2xl relative overflow-hidden w-full"
           >
             {/* Top header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">🏈</span>
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-red-500 block">
-                  NFL BETS DA RESENHA
-                </span>
-                <span className="text-white font-black text-base">Rodada #{selectedRound}</span>
+            <div className="pb-3.5 border-b border-white/10 mb-4 space-y-2.5">
+              {/* Linha 1: Título e Identificação da Rodada */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-2xl flex-shrink-0">🏈</span>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-red-500 block">
+                      NFL BETS DA RESENHA
+                    </span>
+                    <span className="text-white font-black text-base truncate block">
+                      Rodada #{selectedRound}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-gray-900 border border-gray-800 text-gray-400">
+                    {wonBets.length} ✅ | {lossBets.length} ❌{pendingBets.length > 0 ? ` | ${pendingBets.length} ⏳` : ""}
+                  </span>
+                </div>
+              </div>
+
+              {/* Linha 2: Barra Única Integrada de Valores (Abaixo do Título) */}
+              <div className="bg-gray-950/90 border border-white/10 rounded-2xl p-2 px-3 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 shadow-inner w-full">
+                {/* 1. Pote Geral */}
+                <div className="text-center min-w-[65px]">
+                  <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">
+                    Pote Geral
+                  </span>
+                  <span className="text-yellow-400 font-black text-xs sm:text-sm block leading-tight whitespace-nowrap">
+                    R$ {totalPot.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Divisória vertical separando o Pote Geral da Equação */}
+                <div className="w-[1px] h-6 bg-white/15 flex-shrink-0 mx-0.5" />
+
+                {/* 2. Equação da Rodada: Retorno - Apostado = Lucro */}
+                <div className="flex items-center justify-between flex-1 pl-1 gap-1">
+                  {/* Retorno */}
+                  <div className="text-center flex-1">
+                    <span className="text-[9px] text-emerald-400/90 block uppercase font-bold tracking-wider">
+                      Retorno
+                    </span>
+                    <span className="text-emerald-400 font-black text-xs sm:text-sm block leading-tight whitespace-nowrap">
+                      R$ {displayReturn.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Operador - perfeitamente alinhado */}
+                  <div className="flex flex-col items-center justify-center px-0.5 sm:px-1">
+                    <span className="text-[9px] opacity-0 block select-none">&nbsp;</span>
+                    <span className="text-rose-400 font-black text-xs sm:text-sm leading-tight">-</span>
+                  </div>
+
+                  {/* Apostado */}
+                  <div className="text-center flex-1">
+                    <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">
+                      Apostado
+                    </span>
+                    <span className="text-gray-200 font-black text-xs sm:text-sm block leading-tight whitespace-nowrap">
+                      R$ {displayBet.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Operador = perfeitamente alinhado */}
+                  <div className="flex flex-col items-center justify-center px-0.5 sm:px-1">
+                    <span className="text-[9px] opacity-0 block select-none">&nbsp;</span>
+                    <span className="text-gray-400 font-black text-xs sm:text-sm leading-tight">=</span>
+                  </div>
+
+                  {/* Lucro Rodada */}
+                  <div className="text-center flex-1">
+                    <span className={`text-[9px] block uppercase font-black tracking-wider ${
+                      displayRoundProfit > 0 ? "text-emerald-300" : displayRoundProfit < 0 ? "text-rose-300" : "text-gray-400"
+                    }`}>
+                      Lucro
+                    </span>
+                    <span className={`font-black text-xs sm:text-sm block leading-tight whitespace-nowrap ${
+                      displayRoundProfit > 0 ? "text-emerald-400" : displayRoundProfit < 0 ? "text-rose-400" : "text-gray-300"
+                    }`}>
+                      {displayRoundProfit > 0 ? `+R$ ${displayRoundProfit.toFixed(2)}` : `R$ ${displayRoundProfit.toFixed(2)}`}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <span className="text-[10px] text-gray-400 block uppercase font-bold">Pote Geral</span>
-              <span className="text-yellow-400 font-black text-lg">R$ {totalPot.toFixed(2)}</span>
-            </div>
-          </div>
 
           {/* Round Bets List */}
           <div className="space-y-2.5 mb-4">
@@ -233,6 +362,14 @@ Acompanhe os resultados no painel do bolão!`
                         }}
                       />
                       <div className="min-w-0">
+                        {/* Tag colorida do mercado com fundo escuro, igual ao histórico */}
+                        {getMarketBadge(bet) && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border bg-gray-950/80 ${getMarketBadge(bet).color}`}>
+                              {getMarketBadge(bet).icon} {getMarketBadge(bet).label}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5">
                           <span className="text-white font-black text-sm truncate block">
                             {team?.name || "Time"}
@@ -251,6 +388,12 @@ Acompanhe os resultados no painel do bolão!`
                         {rival && (
                           <span className="text-[10px] text-gray-400 block truncate">
                             vs {rival.name}
+                          </span>
+                        )}
+                        {/* Palpite / linha escolhida abaixo do confronto */}
+                        {bet.marketDetails && (
+                          <span className="text-[11px] font-bold text-amber-200/95 block truncate mt-0.5">
+                            📌 {bet.marketDetails}
                           </span>
                         )}
                       </div>
