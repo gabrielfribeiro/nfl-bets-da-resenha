@@ -119,14 +119,14 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
     <>
       {/* Top bar (Header Glassmorphism Full Width) */}
       <header className="bg-gray-950/85 backdrop-blur-md border-b border-white/10 sticky top-0 z-40 transition-all">
-        <div className="w-full px-2.5 sm:px-8 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-4">
-          {/* Brand / Logo + NFL Round + Mobile Live Badge */}
-          <div className="flex items-center gap-1.5 sm:gap-3.5 min-w-0">
+        <div className="w-full px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
+          {/* Brand / Logo + NFL Round */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <button
               onClick={() => setActiveTab("dashboard")}
               className="flex items-center gap-3 text-left group flex-shrink-0"
             >
-              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-500 flex items-center justify-center text-lg sm:text-xl shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-500 flex items-center justify-center text-xl shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
                 🏈
               </div>
               <div className="hidden sm:block">
@@ -146,13 +146,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               onClick={() => syncWithNflWeek()}
               disabled={isSyncingNflWeek}
               title="Sincronizar rodada com a semana atual da NFL (ESPN)"
-              className="h-9 sm:h-11 px-2 sm:px-3.5 bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs sm:text-sm font-black rounded-lg sm:rounded-xl flex items-center gap-1 sm:gap-2 transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+              className="h-11 px-2.5 sm:px-3.5 bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs sm:text-sm font-black rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all hover:scale-105 active:scale-95 flex-shrink-0"
             >
-              <span className={isSyncingNflWeek ? "animate-spin inline-block text-xs sm:text-sm" : "text-xs sm:text-sm"}>
+              <span className={isSyncingNflWeek ? "animate-spin inline-block text-sm" : "text-sm"}>
                 {isSyncingNflWeek ? "⏳" : "🏈"}
               </span>
               <span className="hidden sm:inline">Semana #{currentRound}</span>
-              <span className="sm:hidden text-[11px] font-extrabold">Sem. #{currentRound}</span>
+              <span className="sm:hidden">Sem. #{currentRound}</span>
             </button>
 
             {/* Mobile Live games indicator dot (blinking, without text) */}
@@ -161,7 +161,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                 type="button"
                 onClick={() => setActiveTab("games")}
                 title={`${liveGamesCount} jogo(s) ao vivo - Ver Jogos`}
-                className="w-9 h-9 rounded-lg bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 flex sm:hidden items-center justify-center transition-all shadow-md shadow-red-600/20 active:scale-95 flex-shrink-0 relative"
+                className="w-11 h-11 rounded-xl bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 flex sm:hidden items-center justify-center transition-all shadow-md shadow-red-600/20 active:scale-95 flex-shrink-0 relative"
               >
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping absolute" />
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 relative shadow-sm shadow-red-500" />
@@ -214,18 +214,18 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
           )}
 
           {/* Right Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Total League Pot Card */}
             <div
               onClick={() => setActiveTab("dashboard")}
               title="Ver detalhes no Painel Principal"
-              className="h-9 sm:h-11 px-2 sm:px-4 cursor-pointer flex flex-col items-center justify-center text-center bg-gradient-to-br from-gray-900/90 to-gray-950/90 border border-yellow-400/30 hover:border-yellow-400/60 rounded-lg sm:rounded-xl shadow-inner transition-all hover:scale-105 flex-shrink-0"
+              className="h-11 px-2.5 sm:px-4 cursor-pointer flex flex-col items-center justify-center text-center bg-gradient-to-br from-gray-900/90 to-gray-950/90 border border-yellow-400/30 hover:border-yellow-400/60 rounded-xl shadow-inner transition-all hover:scale-105"
             >
-              <span className="text-[8px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-extrabold leading-none block">
+              <span className="text-[9px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-extrabold leading-none block">
                 <span className="hidden sm:inline">Pote Geral</span>
                 <span className="sm:hidden">Pote</span>
               </span>
-              <span className="text-yellow-400 font-black text-[11px] sm:text-base leading-none mt-0.5 sm:mt-1 block tabular-nums">
+              <span className="text-yellow-400 font-black text-xs sm:text-base leading-none mt-0.5 sm:mt-1 block">
                 R$ {totalPot.toFixed(2)}
               </span>
             </div>
@@ -296,16 +296,16 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                   type="button"
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   title={`Conectado como ${userProfile?.displayName || user?.email}`}
-                  className="h-9 sm:h-11 px-2 sm:px-3 bg-gray-900/90 hover:bg-gray-800 border border-gray-800 hover:border-gray-700 rounded-lg sm:rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all shadow-sm flex-shrink-0"
+                  className="h-11 px-3 bg-gray-900/90 hover:bg-gray-800 border border-gray-800 hover:border-gray-700 rounded-xl flex items-center gap-2 transition-all shadow-sm"
                 >
                   {userProfile?.photoURL ? (
                     <img
                       src={userProfile.photoURL}
                       alt=""
-                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg object-cover border border-white/10 flex-shrink-0"
+                      className="w-7 h-7 rounded-lg object-cover border border-white/10 flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-gray-950 font-black text-[11px] sm:text-xs flex items-center justify-center flex-shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-gray-950 font-black text-xs flex items-center justify-center flex-shrink-0">
                       {(userProfile?.displayName || user?.email || "U")[0].toUpperCase()}
                     </div>
                   )}
@@ -317,7 +317,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                       {roleInfo.label}
                     </span>
                   </div>
-                  <span className="text-gray-400 text-[10px] hidden sm:inline">▼</span>
+                  <span className="text-gray-400 text-[10px]">▼</span>
                 </button>
 
                 {showUserMenu && (
@@ -432,7 +432,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               <button
                 type="button"
                 onClick={() => setShowLoginModal(true)}
-                className="h-9 sm:h-11 px-2.5 sm:px-3.5 bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs sm:text-sm rounded-lg sm:rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-yellow-400/20 hover:scale-105 active:scale-95 flex-shrink-0"
+                className="h-11 px-3.5 bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-yellow-400/20 hover:scale-105 active:scale-95 flex-shrink-0"
               >
                 <span>🔑</span>
                 <span>Entrar</span>

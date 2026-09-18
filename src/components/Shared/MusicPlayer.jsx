@@ -443,22 +443,22 @@ export default function MusicPlayer() {
             setShowMobileControls(!showMobileControls);
           }}
           title="Rádio da Resenha"
-          className={`h-9 sm:h-11 px-2 sm:px-2.5 rounded-lg sm:rounded-xl border flex items-center gap-1 sm:gap-1.5 transition-all text-xs font-black flex-shrink-0 ${
+          className={`h-11 px-2.5 rounded-xl border flex items-center gap-1.5 transition-all text-xs font-black ${
             isPlaying
               ? "bg-amber-400/15 border-amber-400/40 text-amber-300"
               : "bg-gray-900/90 border-gray-800 text-gray-400"
           }`}
         >
-          <span className="text-xs sm:text-sm">{currentTrack.emoji || "🪕"}</span>
+          <span className="text-sm">{currentTrack.emoji || "🪕"}</span>
           {isPlaying && (
             <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-ping" />
           )}
-          <span className="text-[11px] sm:text-xs">{isMuted || volume === 0 ? "🔇" : "🔊"}</span>
+          <span className="text-xs">{isMuted || volume === 0 ? "🔇" : "🔊"}</span>
         </button>
 
         {/* Mobile Popover Controls & Playlist */}
         {showMobileControls && (
-          <div className="absolute top-12 sm:top-14 right-0 z-50 bg-gray-900 border border-gray-700 shadow-2xl rounded-2xl p-4 w-72 animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute top-14 right-0 z-50 bg-gray-900 border border-gray-700 shadow-2xl rounded-2xl p-4 w-72 animate-in fade-in zoom-in-95 duration-150">
             {/* Header Track Info */}
             <div className="flex items-center justify-between gap-2 pb-3 border-b border-gray-800">
               <div className="flex items-center gap-2 min-w-0">
