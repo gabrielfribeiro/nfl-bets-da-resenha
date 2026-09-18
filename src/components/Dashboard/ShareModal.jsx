@@ -3,10 +3,10 @@ import { toBlob, toPng } from "html-to-image";
 import { useBet } from "../../context/BetContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { sounds } from "../../utils/sound";
-import { getMarketDisplay, getMarketBadge } from "../../utils/markets";
+import { getMarketDisplay, getMarketBadge, calculatePotentialReturn } from "../../utils/markets";
 
 export default function ShareModal({ onClose }) {
-  const { currentRound, selectedTeamIds, teams, bets, maxOdd } = useBet();
+  const { currentRound, selectedTeamIds, teams, bets, maxOdd, powerUpsList } = useBet();
   const [copied, setCopied] = useState(false);
   const [imageCopied, setImageCopied] = useState(false);
   const [isCopyingImage, setIsCopyingImage] = useState(false);
@@ -50,7 +50,9 @@ export default function ShareModal({ onClose }) {
               const badge = getMarketBadge(b);
               const badgeTag = badge ? ` [${badge.icon} ${badge.label}]` : "";
               const marketLine = b.marketDetails ? `\n   📌 *Palpite:* ${b.marketDetails}` : "";
-              return `👉 *${team?.name || "Time"}*${vsText}${badgeTag}${marketLine}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${powerUpTag} -> ${status}`;
+              const { profit, total } = calculatePotentialReturn(b, powerUpsList);
+              const returnText = ` | 💵 Retorno: R$ ${total.toFixed(2)} (+R$ ${profit.toFixed(2)})`;
+              return `👉 *${team?.name || "Time"}*${vsText}${badgeTag}${marketLine}\n   💰 R$ ${b.amount.toFixed(2)} | Odd: ${b.odd.toFixed(2)}${returnText}${powerUpTag} -> ${status}`;
             })
             .join("\n")
         : "_Nenhuma aposta registrada nesta rodada._";
@@ -284,6 +286,21 @@ Acompanhe os resultados no painel do bolão!`
                           @{bet.odd.toFixed(2)}
                         </span>
                       </div>
+
+                      {/* Ganhos em Potencial */}
+                      {(() => {
+                        const { profit, total } = calculatePotentialReturn(bet, powerUpsList);
+                        return (
+                          <div className="mt-0.5 text-right">
+                            <span className="text-[10px] font-black text-emerald-400 block tracking-tight">
+                              💵 R$ {total.toFixed(2)}
+                              <span className="text-[9px] text-emerald-500/80 font-semibold ml-1">
+                                (+R$ {profit.toFixed(2)})
+                              </span>
+                            </span>
+                          </div>
+                        );
+                      })()}
                       <div className="mt-1">
                         {isWin && (
                           <span className="text-[10px] font-black uppercase text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">

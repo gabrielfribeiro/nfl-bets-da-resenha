@@ -98,3 +98,14 @@ export function getMarketBadge(bet) {
     color: market.color,
   };
 }
+
+export function calculatePotentialReturn(bet, powerUpsList = []) {
+  if (!bet) return { profit: 0, total: 0, multiplier: 1 };
+  const amount = Number(bet.amount) || 0;
+  const odd = Number(bet.odd) || 1;
+  const powerObj = powerUpsList?.find((p) => p.id === bet.powerUp);
+  const multiplier = powerObj?.multiplier ?? (bet.powerUp === "double" ? 2 : 1);
+  const profit = parseFloat((amount * Math.max(0, odd - 1) * multiplier).toFixed(2));
+  const total = parseFloat((amount + profit).toFixed(2));
+  return { profit, total, multiplier };
+}

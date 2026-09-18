@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
-import { getMarketBadge, getMarketDisplay } from "../../utils/markets";
+import { getMarketBadge, getMarketDisplay, calculatePotentialReturn } from "../../utils/markets";
 import EditBetModal from "./EditBetModal";
 
 const RESULT_CONFIG = {
@@ -36,7 +36,7 @@ const RESULT_CONFIG = {
 };
 
 export default function BetHistory({ onOpenNewBet }) {
-  const { bets, updateBetResult, reopenBet, deleteBet, currentRound } = useBet();
+  const { bets, updateBetResult, reopenBet, deleteBet, currentRound, powerUpsList } = useBet();
   const { canManageBets, isAdmin } = useAuth();
 
   // Filters State
@@ -750,6 +750,7 @@ export default function BetHistory({ onOpenNewBet }) {
                           onEdit={setEditingBet}
                           canManage={canManageBets}
                           isAdmin={isAdmin}
+                          powerUpsList={powerUpsList}
                         />
                       ))}
                     </div>
@@ -774,6 +775,7 @@ export default function BetHistory({ onOpenNewBet }) {
               onEdit={setEditingBet}
               canManage={canManageBets}
               isAdmin={isAdmin}
+              powerUpsList={powerUpsList}
             />
           ))}
         </div>
@@ -800,6 +802,7 @@ function BetTicketCard({
   onEdit,
   canManage,
   isAdmin,
+  powerUpsList,
 }) {
   const teamA = getTeamById(bet.teamAId);
   const teamB = getTeamById(bet.teamBId);
@@ -812,7 +815,7 @@ function BetTicketCard({
   const potDiffColor =
     potDiff > 0 ? "text-emerald-400" : potDiff < 0 ? "text-red-400" : "text-gray-400";
 
-  const potentialReturn = (bet.amount * (bet.odd || 1)).toFixed(2);
+  const potential = calculatePotentialReturn(bet, powerUpsList);
   const isProtectedByShield = bet.result === "loss" && bet.powerUp === "shield";
 
   return (
@@ -939,7 +942,10 @@ function BetTicketCard({
 
           <div className="text-right flex-shrink-0">
             <span className="text-[10px] text-gray-400 font-bold block">Odd</span>
-            <span className="text-yellow-400 font-black text-base">@{bet.odd}</span>
+            <span className="text-yellow-400 font-black text-base leading-tight">@{bet.odd}</span>
+            <span className="text-[10px] font-black text-emerald-400 block mt-0.5" title="Retorno Potencial">
+              💵 R$ {potential.total.toFixed(2)}
+            </span>
           </div>
         </div>
 
@@ -960,9 +966,12 @@ function BetTicketCard({
           </div>
 
           <div className="bg-gray-950/60 border border-gray-800/80 rounded-xl p-2.5">
-            <span className="text-[10px] text-gray-400 block font-semibold">Retorno Potencial</span>
+            <span className="text-[10px] text-gray-400 block font-semibold">Ganhos em Potencial</span>
             <span className="text-emerald-400 font-black text-xs sm:text-sm block mt-0.5 truncate">
-              R$ {potentialReturn}
+              R$ {potential.total.toFixed(2)}
+            </span>
+            <span className="text-[9px] text-emerald-500/90 font-bold block truncate mt-0.5">
+              +R$ {potential.profit.toFixed(2)} lucro{potential.multiplier > 1 ? ` (⚡${potential.multiplier}X)` : ""}
             </span>
           </div>
 
