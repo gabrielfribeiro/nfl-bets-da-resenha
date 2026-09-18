@@ -228,68 +228,85 @@ Acompanhe os resultados no painel do bolão!`
             className="bg-gradient-to-br from-gray-950 via-gray-900 to-red-950/40 border-2 border-yellow-400/40 rounded-3xl p-5 shadow-2xl relative overflow-hidden w-full"
           >
             {/* Top header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 mb-4 gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="text-2xl flex-shrink-0">🏈</span>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-red-500 block">
-                    NFL BETS DA RESENHA
+            <div className="pb-3.5 border-b border-white/10 mb-4 space-y-2.5">
+              {/* Linha 1: Título e Identificação da Rodada */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-2xl flex-shrink-0">🏈</span>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-red-500 block">
+                      NFL BETS DA RESENHA
+                    </span>
+                    <span className="text-white font-black text-base truncate block">
+                      Rodada #{selectedRound}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-gray-900 border border-gray-800 text-gray-400">
+                    {wonBets.length} ✅ | {lossBets.length} ❌{pendingBets.length > 0 ? ` | ${pendingBets.length} ⏳` : ""}
                   </span>
-                  <span className="text-white font-black text-base truncate block">Rodada #{selectedRound}</span>
                 </div>
               </div>
 
-              {/* Barra Única Integrada de Valores: Pote Geral | Retorno - Apostado = Lucro */}
-              <div className="bg-gray-950/90 border border-white/10 rounded-2xl p-1.5 px-3 flex items-center gap-2 self-end sm:self-auto shadow-inner flex-wrap sm:flex-nowrap justify-end">
+              {/* Linha 2: Barra Única Integrada de Valores (Abaixo do Título) */}
+              <div className="bg-gray-950/90 border border-white/10 rounded-2xl p-2 px-3 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 shadow-inner w-full">
                 {/* 1. Pote Geral */}
-                <div className="text-right">
+                <div className="text-center min-w-[65px]">
                   <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">
                     Pote Geral
                   </span>
-                  <span className="text-yellow-400 font-black text-xs sm:text-sm block leading-tight">
+                  <span className="text-yellow-400 font-black text-xs sm:text-sm block leading-tight whitespace-nowrap">
                     R$ {totalPot.toFixed(2)}
                   </span>
                 </div>
 
                 {/* Divisória vertical separando o Pote Geral da Equação */}
-                <div className="w-[1px] h-6 bg-white/15 mx-0.5 hidden sm:block" />
+                <div className="w-[1px] h-6 bg-white/15 flex-shrink-0 mx-0.5" />
 
                 {/* 2. Equação da Rodada: Retorno - Apostado = Lucro */}
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-between flex-1 pl-1 gap-1">
                   {/* Retorno */}
-                  <div className="text-right">
+                  <div className="text-center flex-1">
                     <span className="text-[9px] text-emerald-400/90 block uppercase font-bold tracking-wider">
                       Retorno
                     </span>
-                    <span className="text-emerald-400 font-black text-xs sm:text-sm block leading-tight">
+                    <span className="text-emerald-400 font-black text-xs sm:text-sm block leading-tight whitespace-nowrap">
                       R$ {displayReturn.toFixed(2)}
                     </span>
                   </div>
 
-                  {/* Sinal - */}
-                  <span className="text-rose-400/90 font-bold text-xs">-</span>
+                  {/* Operador - perfeitamente alinhado */}
+                  <div className="flex flex-col items-center justify-center px-0.5 sm:px-1">
+                    <span className="text-[9px] opacity-0 block select-none">&nbsp;</span>
+                    <span className="text-rose-400 font-black text-xs sm:text-sm leading-tight">-</span>
+                  </div>
 
                   {/* Apostado */}
-                  <div className="text-right">
+                  <div className="text-center flex-1">
                     <span className="text-[9px] text-gray-400 block uppercase font-bold tracking-wider">
                       Apostado
                     </span>
-                    <span className="text-gray-200 font-black text-xs sm:text-sm block leading-tight">
+                    <span className="text-gray-200 font-black text-xs sm:text-sm block leading-tight whitespace-nowrap">
                       R$ {displayBet.toFixed(2)}
                     </span>
                   </div>
 
-                  {/* Sinal = */}
-                  <span className="text-gray-400 font-bold text-xs">=</span>
+                  {/* Operador = perfeitamente alinhado */}
+                  <div className="flex flex-col items-center justify-center px-0.5 sm:px-1">
+                    <span className="text-[9px] opacity-0 block select-none">&nbsp;</span>
+                    <span className="text-gray-400 font-black text-xs sm:text-sm leading-tight">=</span>
+                  </div>
 
                   {/* Lucro Rodada */}
-                  <div className="text-right pl-0.5">
+                  <div className="text-center flex-1">
                     <span className={`text-[9px] block uppercase font-black tracking-wider ${
                       displayRoundProfit > 0 ? "text-emerald-300" : displayRoundProfit < 0 ? "text-rose-300" : "text-gray-400"
                     }`}>
                       Lucro
                     </span>
-                    <span className={`font-black text-xs sm:text-sm block leading-tight ${
+                    <span className={`font-black text-xs sm:text-sm block leading-tight whitespace-nowrap ${
                       displayRoundProfit > 0 ? "text-emerald-400" : displayRoundProfit < 0 ? "text-rose-400" : "text-gray-300"
                     }`}>
                       {displayRoundProfit > 0 ? `+R$ ${displayRoundProfit.toFixed(2)}` : `R$ ${displayRoundProfit.toFixed(2)}`}
