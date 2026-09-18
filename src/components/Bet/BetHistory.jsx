@@ -3,6 +3,7 @@ import { useBet } from "../../context/BetContext";
 import { useAuth } from "../../context/AuthContext";
 import { getTeamById, getLogoUrl } from "../../data/nflTeams";
 import { getMarketBadge, getMarketDisplay } from "../../utils/markets";
+import EditBetModal from "./EditBetModal";
 
 const RESULT_CONFIG = {
   win: {
@@ -47,6 +48,7 @@ export default function BetHistory({ onOpenNewBet }) {
   const [sortBy, setSortBy] = useState("newest"); // 'newest' | 'oldest' | 'odd_desc' | 'amount_desc' | 'profit_desc'
   const [viewMode, setViewMode] = useState("timeline"); // 'timeline' | 'list'
   const [expandedId, setExpandedId] = useState(null);
+  const [editingBet, setEditingBet] = useState(null);
 
   // Teams with at least one bet
   const uniqueTeams = useMemo(() => {
@@ -651,6 +653,7 @@ export default function BetHistory({ onOpenNewBet }) {
                     onUpdateResult={updateBetResult}
                     onReopen={reopenBet}
                     onDelete={deleteBet}
+                    onEdit={setEditingBet}
                     canManage={canManageBets}
                     isAdmin={isAdmin}
                   />
@@ -671,11 +674,20 @@ export default function BetHistory({ onOpenNewBet }) {
               onUpdateResult={updateBetResult}
               onReopen={reopenBet}
               onDelete={deleteBet}
+              onEdit={setEditingBet}
               canManage={canManageBets}
               isAdmin={isAdmin}
             />
           ))}
         </div>
+      )}
+
+      {/* Modal de Edição (Exclusivo Comissário) */}
+      {editingBet && (
+        <EditBetModal
+          bet={editingBet}
+          onClose={() => setEditingBet(null)}
+        />
       )}
     </div>
   );
@@ -688,6 +700,7 @@ function BetTicketCard({
   onUpdateResult,
   onReopen,
   onDelete,
+  onEdit,
   canManage,
   isAdmin,
 }) {
@@ -965,8 +978,8 @@ function BetTicketCard({
           </div>
         )}
 
-        {/* Ações: Resolução (Comissários e Moderadores) / Reabertura e Exclusão (Exclusivo Comissário) */}
-        {((bet.result === "pending" && canManage) || (bet.result !== "pending" && isAdmin)) && (
+        {/* Ações: Resolução (Comissários e Moderadores) / Reabertura, Edição e Exclusão (Exclusivo Comissário) */}
+        {((bet.result === "pending" && canManage) || isAdmin) && (
           <div className="pt-2 border-t border-gray-800/80 flex items-center gap-2 flex-wrap">
             {bet.result === "pending" ? (
               <>
@@ -1003,9 +1016,22 @@ function BetTicketCard({
                   className="flex-1 py-1.5 px-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-yellow-400/30 font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <span>↩️</span>
-                  <span>Reabrir Palpite (Voltar a Pendente)</span>
+                  <span>Reabrir Palpite</span>
                 </button>
               )
+            )}
+
+            {/* Ajuste restrito exclusivamente ao Comissário */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => onEdit(bet)}
+                title="Ajustar dados desta aposta (Exclusivo Comissário)"
+                className="py-1.5 px-3 rounded-xl bg-yellow-400/15 hover:bg-yellow-400/30 text-yellow-300 border border-yellow-400/40 font-black text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm flex-shrink-0"
+              >
+                <span>✏️</span>
+                <span>Ajustar</span>
+              </button>
             )}
 
             {/* Exclusão restrita exclusivamente ao Comissário */}

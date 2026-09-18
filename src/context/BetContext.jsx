@@ -662,6 +662,127 @@ export function BetProvider({ children }) {
     }));
   }, []);
 
+  const editBet = useCallback((betId, updatedFields) => {
+    setState((prev) => {
+      const oldBet = prev.bets.find((b) => b.id === betId);
+      if (!oldBet) return prev;
+
+      const affectsFinancials =
+        (updatedFields.amount !== undefined && Number(updatedFields.amount) !== Number(oldBet.amount)) ||
+        (updatedFields.odd !== undefined && Number(updatedFields.odd) !== Number(oldBet.odd)) ||
+        (updatedFields.powerUp !== undefined && updatedFields.powerUp !== oldBet.powerUp) ||
+        (updatedFields.bettingOnTeamId !== undefined && updatedFields.bettingOnTeamId !== oldBet.bettingOnTeamId);
+
+      let updatedTeams = prev.teams;
+      let newPotAfter = oldBet.potAfter;
+
+      if (oldBet.result !== "pending" && affectsFinancials) {
+        const oldTeamId = oldBet.bettingOnTeamId;
+        const oldTeamState = prev.teams[oldTeamId];
+        if (oldTeamState) {
+          let revertedPot = oldTeamState.pot;
+          const currentList = prev.powerUpsList ?? effectivePowerUpsList;
+          const oldPowerObj = currentList.find((p) => p.id === oldBet.powerUp);
+
+          if (oldBet.result === "win") {
+            const oldMult = oldPowerObj?.multiplier ?? (oldBet.powerUp === "double" ? 2 : 1);
+            const oldProfit = oldBet.amount * (oldBet.odd - 1) * oldMult;
+            revertedPot = Math.max(0, revertedPot - oldProfit);
+          } else if (oldBet.result === "loss") {
+            if (oldPowerObj?.type !== "shield" && oldBet.powerUp !== "shield") {
+              revertedPot = revertedPot + oldBet.amount;
+            }
+          }
+
+          const newTeamId = updatedFields.bettingOnTeamId || oldBet.bettingOnTeamId;
+          const targetTeamState = oldTeamId === newTeamId ? { ...oldTeamState, pot: revertedPot } : prev.teams[newTeamId];
+
+          if (targetTeamState) {
+            const newAmount = updatedFields.amount !== undefined ? Number(updatedFields.amount) : oldBet.amount;
+            const newOdd = updatedFields.odd !== undefined ? Number(updatedFields.odd) : oldBet.odd;
+            const newPowerUp = updatedFields.powerUp !== undefined ? updatedFields.powerUp : oldBet.powerUp;
+            const newPowerObj = currentList.find((p) => p.id === newPowerUp);
+
+            let calculatedPot = targetTeamState.pot;
+            if (oldBet.result === "win") {
+              const mult = newPowerObj?.multiplier ?? (newPowerUp === "double" ? 2 : 1);
+              const profit = newAmount * (newOdd - 1) * mult;
+              calculatedPot = calculatedPot + profit;
+            } else if (oldBet.result === "loss") {
+              if (newPowerObj?.type !== "shield" && newPowerUp !== "shield") {
+                calculatedPot = Math.max(0, calculatedPot - newAmount);
+              }
+            }
+
+            calculatedPot = parseFloat(calculatedPot.toFixed(2));
+            newPotAfter = calculatedPot;
+
+            if (oldTeamId === newTeamId) {
+              updatedTeams = {
+                ...prev.teams,
+                [newTeamId]: {
+                  ...targetTeamState,
+                  pot: calculatedPot,
+                  potHistory: [...targetTeamState.potHistory, calculatedPot],
+                },
+              };
+            } else {
+              updatedTeams = {
+                ...prev.teams,
+                [oldTeamId]: {
+                  ...oldTeamState,
+                  pot: parseFloat(revertedPot.toFixed(2)),
+                  potHistory: [...oldTeamState.potHistory, parseFloat(revertedPot.toFixed(2))],
+                  totalWins: oldBet.result === "win" ? Math.max(0, oldTeamState.totalWins - 1) : oldTeamState.totalWins,
+                  totalLosses: oldBet.result === "loss" ? Math.max(0, oldTeamState.totalLosses - 1) : oldTeamState.totalLosses,
+                },
+                [newTeamId]: {
+                  ...targetTeamState,
+                  pot: calculatedPot,
+                  potHistory: [...targetTeamState.potHistory, calculatedPot],
+                  totalWins: oldBet.result === "win" ? targetTeamState.totalWins + 1 : targetTeamState.totalWins,
+                  totalLosses: oldBet.result === "loss" ? targetTeamState.totalLosses + 1 : targetTeamState.totalLosses,
+                },
+              };
+            }
+          }
+        }
+      }
+
+      const updatedBet = {
+        ...oldBet,
+        ...updatedFields,
+        amount: updatedFields.amount !== undefined ? Number(updatedFields.amount) : oldBet.amount,
+        odd: updatedFields.odd !== undefined ? Number(updatedFields.odd) : oldBet.odd,
+        round: updatedFields.round !== undefined ? Number(updatedFields.round) : oldBet.round,
+        potAfter: newPotAfter,
+        lastEditedAt: new Date().toISOString(),
+      };
+
+      const updatedBets = prev.bets.map((b) => (b.id === betId ? updatedBet : b));
+
+      if (isFirebaseConfigured()) {
+        saveBetDoc(DEFAULT_LEAGUE_ID, updatedBet).catch((err) =>
+          console.error("[Firebase] Erro ao salvar edição de aposta:", err)
+        );
+
+        if (updatedTeams !== prev.teams) {
+          saveLeagueConfig(DEFAULT_LEAGUE_ID, {
+            teams: updatedTeams,
+          }).catch((err) =>
+            console.error("[Firebase] Erro ao atualizar potes após edição:", err)
+          );
+        }
+      }
+
+      return {
+        ...prev,
+        bets: updatedBets,
+        teams: updatedTeams,
+      };
+    });
+  }, [effectivePowerUpsList]);
+
   // ── POT MANAGEMENT ─────────────────────────────────────────────────
   const addPotFunds = useCallback((teamId, amount) => {
     sounds.playWin();
@@ -964,6 +1085,7 @@ export function BetProvider({ children }) {
         addBet,
         updateBetResult,
         reopenBet,
+        editBet,
         deleteBet,
         addPotFunds,
         nextRound,
