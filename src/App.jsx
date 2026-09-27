@@ -13,6 +13,7 @@ import UserProfile from "./components/User/UserProfile";
 import Rules from "./components/Rules/Rules";
 import BroadcastTicker from "./components/Shared/BroadcastTicker";
 import LoginModal from "./components/Auth/LoginModal";
+import InterdictedBanner from "./components/Shared/InterdictedBanner";
 
 import GamesLive from "./components/Games/GamesLive";
 import TeamStats from "./components/Stats/TeamStats";
@@ -62,12 +63,18 @@ function AppContent() {
 
   // 2. OBRIGATÓRIO ESTAR LOGADO: se não estiver autenticado, exibe a tela de login exclusiva
   if (!isAuthenticated) {
-    return <LoginModal forceOpen={true} />;
+    return (
+      <>
+        <InterdictedBanner />
+        <LoginModal forceOpen={true} />
+      </>
+    );
   }
 
   if (!setupComplete) {
     return (
       <>
+        <InterdictedBanner />
         <TeamSelector />
         <LoginModal />
       </>
@@ -75,7 +82,8 @@ function AppContent() {
   }
 
   return (
-    <div className="bg-gray-950 min-h-screen text-white pb-28">
+    <div className="bg-gray-950 min-h-screen text-white pb-28 relative">
+      <InterdictedBanner />
       <Navbar
         activeTab={activeTab}
         setActiveTab={handleTabChange}
