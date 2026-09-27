@@ -120,22 +120,23 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
       {/* Top bar (Header Glassmorphism Full Width) */}
       <header className="bg-gray-950/85 backdrop-blur-md border-b border-white/10 sticky top-0 z-40 transition-all">
         <div className="w-full px-3 sm:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Brand / Logo + NFL Round */}
-          <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
+          {/* Brand / Logo + NFL Round (INTERDITADO) */}
+          <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0 pointer-events-none opacity-40 cursor-not-allowed select-none" title="Interditado pela fiscalização">
             <button
-              onClick={() => setActiveTab("dashboard")}
+              type="button"
+              disabled
               className="hidden sm:flex items-center gap-3 text-left group flex-shrink-0"
             >
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-500 flex items-center justify-center text-xl shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500/50 via-yellow-400/50 to-yellow-500/50 flex items-center justify-center text-xl shadow-md flex-shrink-0">
                 🏈
               </div>
               <div className="hidden sm:block">
-                <span className="text-white font-black tracking-tight text-base sm:text-lg block leading-tight group-hover:text-yellow-400 transition-colors">
+                <span className="text-gray-400 font-black tracking-tight text-base sm:text-lg block leading-tight">
                   NFL Bets da Resenha
                 </span>
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block leading-tight flex items-center gap-1.5 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Bolão Oficial
+                <span className="text-xs text-red-400 font-bold uppercase tracking-wider block leading-tight flex items-center gap-1.5 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  Interditado
                 </span>
               </div>
             </button>
@@ -143,83 +144,51 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
             {/* NFL Round sync badge */}
             <button
               type="button"
-              onClick={() => syncWithNflWeek()}
-              disabled={isSyncingNflWeek}
-              title="Sincronizar rodada com a semana atual da NFL (ESPN)"
-              className="h-11 px-2.5 sm:px-3.5 bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs sm:text-sm font-black rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+              disabled
+              className="h-11 px-2.5 sm:px-3.5 bg-yellow-400/5 text-yellow-400/50 border border-yellow-400/20 text-xs sm:text-sm font-black rounded-xl flex items-center gap-1.5 sm:gap-2 flex-shrink-0"
             >
-              <span className={isSyncingNflWeek ? "animate-spin inline-block text-sm" : "text-sm"}>
-                {isSyncingNflWeek ? "⏳" : "🏈"}
-              </span>
+              <span className="text-sm">🏈</span>
               <span className="hidden sm:inline">Semana #{currentRound}</span>
               <span className="sm:hidden">Sem. #{currentRound}</span>
             </button>
 
-            {/* Mobile Live games indicator dot (blinking, without text) */}
+            {/* Mobile Live games indicator dot */}
             {liveGamesCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setActiveTab("games")}
-                title={`${liveGamesCount} jogo(s) ao vivo - Ver Jogos`}
-                className="w-9 h-11 rounded-xl bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 flex sm:hidden items-center justify-center transition-all shadow-md shadow-red-600/20 active:scale-95 flex-shrink-0 relative"
+              <div
+                className="w-9 h-11 rounded-xl bg-red-600/10 border border-red-500/20 flex sm:hidden items-center justify-center flex-shrink-0"
               >
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping absolute" />
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 relative shadow-sm shadow-red-500" />
-              </button>
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 opacity-50" />
+              </div>
             )}
 
             {/* Cloud Status Badge */}
             <button
               type="button"
-              onClick={() => setActiveTab(isAdmin ? "settings" : "profile")}
-              title={
-                isCloudEnabled
-                  ? cloudSyncStatus === "saving"
-                    ? "Salvando na nuvem..."
-                    : "Conectado ao Firebase Firestore (Tempo Real)"
-                  : "Modo Local (Offline)."
-              }
-              className={`h-11 px-3 rounded-xl border text-xs font-black hidden sm:flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
-                isCloudEnabled
-                  ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                  : "bg-gray-900/80 hover:bg-gray-800 text-gray-400 hover:text-yellow-400 border-gray-800"
-              }`}
+              disabled
+              className="h-11 px-3 rounded-xl border text-xs font-black hidden sm:flex items-center gap-1.5 bg-gray-900/50 text-gray-500 border-gray-800 flex-shrink-0"
             >
-              {isCloudEnabled ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span className="hidden md:inline">
-                    {cloudSyncStatus === "saving" ? "Salvando..." : "Nuvem"}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span>☁️</span>
-                  <span className="hidden md:inline">Local</span>
-                </>
-              )}
+              <span>☁️</span>
+              <span className="hidden md:inline">Bloqueado</span>
             </button>
           </div>
 
-          {/* Center: Live games indicator pulse (Desktop/Tablet only) */}
+          {/* Center: Live games indicator pulse (INTERDITADO) */}
           {liveGamesCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("games")}
-              className="h-11 px-4 rounded-xl bg-red-600/20 border border-red-500/50 text-red-400 hover:text-white text-xs sm:text-sm font-black hidden sm:flex items-center gap-2 hover:bg-red-600/30 transition-all shadow-md shadow-red-600/20 animate-pulse flex-shrink-0"
+            <div
+              className="h-11 px-4 rounded-xl bg-red-600/10 border border-red-500/20 text-red-400/60 text-xs sm:text-sm font-black hidden sm:flex items-center gap-2 flex-shrink-0 pointer-events-none opacity-40 cursor-not-allowed select-none"
+              title="Interditado pela fiscalização"
             >
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 opacity-40"></span>
               <span>{liveGamesCount} Ao Vivo</span>
-            </button>
+            </div>
           )}
 
           {/* Right Controls */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {/* Total League Pot Card */}
+            {/* Total League Pot Card (Interditado/Bloqueado) */}
             <div
-              onClick={() => setActiveTab("dashboard")}
-              title="Ver detalhes no Painel Principal"
-              className="h-11 px-2.5 sm:px-4 cursor-pointer flex flex-col items-center justify-center text-center bg-gradient-to-br from-gray-900/90 to-gray-950/90 border border-yellow-400/30 hover:border-yellow-400/60 rounded-xl shadow-inner transition-all hover:scale-105"
+              title="Site interditado pelo STF / Faz o L"
+              className="h-11 px-2.5 sm:px-4 flex flex-col items-center justify-center text-center bg-gradient-to-br from-gray-900/90 to-gray-950/90 border border-yellow-400/20 rounded-xl shadow-inner pointer-events-none opacity-40 cursor-not-allowed select-none"
             >
               <span className="text-[9px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-extrabold leading-none block">
                 <span className="hidden sm:inline">Pote Geral</span>
@@ -230,73 +199,63 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
               </span>
             </div>
 
-            {/* Music Player: Pagode da Resenha */}
-            <MusicPlayer />
+            {/* Music Player: Pagode & Reggaeton da Resenha (ÚNICO LIBERADO) */}
+            <div className="pointer-events-auto z-50 ring-2 ring-amber-400/50 rounded-xl shadow-lg shadow-amber-400/20">
+              <MusicPlayer />
+            </div>
 
-            {/* Sound Toggle Button */}
+            {/* Sound Toggle Button (Desativado) */}
             <button
-              onClick={toggleSound}
-              title={isMuted ? "Ativar efeitos sonoros" : "Desativar efeitos sonoros"}
-              className="w-11 h-11 rounded-xl bg-gray-900/90 border border-gray-800 hover:border-gray-700 hidden sm:flex items-center justify-center text-lg text-gray-400 hover:text-white transition-colors flex-shrink-0"
+              disabled
+              title="Interditado - Apenas músicas permitidas"
+              className="w-11 h-11 rounded-xl bg-gray-900/90 border border-gray-800 hidden sm:flex items-center justify-center text-lg text-gray-500 pointer-events-none opacity-40 cursor-not-allowed select-none flex-shrink-0"
             >
               {isMuted ? "🔇" : "🔊"}
             </button>
 
-            {/* Admin Quick Link */}
+            {/* Admin Quick Link (Desativado) */}
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setActiveTab("users")}
-                title="Painel de Usuários e Permissões"
-                className={`h-11 hidden md:flex items-center justify-center gap-1.5 px-3.5 rounded-xl border text-xs font-black transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
-                  activeTab === "users"
-                    ? "bg-yellow-400 text-gray-950 border-yellow-400 shadow-md shadow-yellow-400/20"
-                    : "bg-gray-900/90 hover:bg-gray-800 text-yellow-400 border-yellow-400/30"
-                }`}
+                disabled
+                title="Interditado"
+                className="h-11 hidden md:flex items-center justify-center gap-1.5 px-3.5 rounded-xl border border-yellow-400/20 text-xs font-black bg-gray-900/90 text-yellow-400/50 pointer-events-none opacity-40 cursor-not-allowed select-none flex-shrink-0"
               >
                 <span>👥</span>
                 <span>Usuários</span>
               </button>
             )}
 
-            {/* Quick Stats Link */}
+            {/* Quick Stats Link (Desativado) */}
             <button
               type="button"
-              onClick={() => setActiveTab("stats")}
-              title="Estatísticas e Raio-X dos Times"
-              className={`h-11 hidden md:flex items-center justify-center gap-1.5 px-3 rounded-xl border text-xs font-black transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
-                activeTab === "stats"
-                  ? "bg-yellow-400 text-gray-950 border-yellow-400 shadow-md shadow-yellow-400/20"
-                  : "bg-gray-900/90 hover:bg-gray-800 text-gray-300 hover:text-white border-gray-800"
-              }`}
+              disabled
+              title="Interditado"
+              className="h-11 hidden md:flex items-center justify-center gap-1.5 px-3 rounded-xl border border-gray-800 text-xs font-black bg-gray-900/90 text-gray-500 pointer-events-none opacity-40 cursor-not-allowed select-none flex-shrink-0"
             >
               <span>📊</span>
               <span className="hidden xl:inline">Stats</span>
             </button>
 
-            {/* Quick Rules Link */}
+            {/* Quick Rules Link (Desativado) */}
             <button
               type="button"
-              onClick={() => setActiveTab("rules")}
-              title="Regras Oficiais do Bolão"
-              className={`h-11 hidden md:flex items-center justify-center gap-1.5 px-3 rounded-xl border text-xs font-black transition-all hover:scale-105 active:scale-95 flex-shrink-0 ${
-                activeTab === "rules"
-                  ? "bg-yellow-400 text-gray-950 border-yellow-400 shadow-md shadow-yellow-400/20"
-                  : "bg-gray-900/90 hover:bg-gray-800 text-gray-300 hover:text-white border-gray-800"
-              }`}
+              disabled
+              title="Interditado"
+              className="h-11 hidden md:flex items-center justify-center gap-1.5 px-3 rounded-xl border border-gray-800 text-xs font-black bg-gray-900/90 text-gray-500 pointer-events-none opacity-40 cursor-not-allowed select-none flex-shrink-0"
             >
               <span>📜</span>
               <span className="hidden xl:inline">Regras</span>
             </button>
 
-            {/* Auth Profile / Login Button */}
+            {/* Auth Profile / Login Button (Desativado) */}
             {isAuthenticated ? (
-              <div className="relative flex-shrink-0" ref={menuRef}>
+              <div className="relative flex-shrink-0 pointer-events-none opacity-40 cursor-not-allowed select-none" ref={menuRef}>
                 <button
                   type="button"
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  title={`Conectado como ${userProfile?.displayName || user?.email}`}
-                  className="h-11 px-3 bg-gray-900/90 hover:bg-gray-800 border border-gray-800 hover:border-gray-700 rounded-xl flex items-center gap-2 transition-all shadow-sm"
+                  disabled
+                  title="Interditado"
+                  className="h-11 px-3 bg-gray-900/90 border border-gray-800 rounded-xl flex items-center gap-2 shadow-sm"
                 >
                   {userProfile?.photoURL ? (
                     <img
@@ -431,8 +390,9 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
             ) : (
               <button
                 type="button"
-                onClick={() => setShowLoginModal(true)}
-                className="h-11 px-3.5 bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-yellow-400/20 hover:scale-105 active:scale-95 flex-shrink-0"
+                disabled
+                title="Interditado"
+                className="h-11 px-3.5 bg-yellow-400/50 text-gray-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-1.5 pointer-events-none opacity-40 cursor-not-allowed select-none flex-shrink-0"
               >
                 <span>🔑</span>
                 <span>Entrar</span>
@@ -441,12 +401,12 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
           </div>
         </div>
 
-        {/* AVISO DE APOSTAS PENDENTES DE JOGOS JÁ ENCERRADOS */}
+        {/* AVISO DE APOSTAS PENDENTES DE JOGOS JÁ ENCERRADOS (DESATIVADO) */}
         {pendingFinishedCount > 0 && (
-          <div className="bg-gradient-to-r from-amber-950/90 via-yellow-950/70 to-amber-950/90 border-t border-b border-yellow-500/40 px-4 sm:px-8 py-2.5 shadow-lg">
+          <div className="bg-gradient-to-r from-amber-950/90 via-yellow-950/70 to-amber-950/90 border-t border-b border-yellow-500/40 px-4 sm:px-8 py-2.5 shadow-lg pointer-events-none opacity-40 cursor-not-allowed select-none">
             <div className="w-full flex items-center justify-between gap-4">
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="text-lg flex-shrink-0 animate-bounce">⚠️</span>
+                <span className="text-lg flex-shrink-0">⚠️</span>
                 <div className="min-w-0">
                   <p className="text-xs font-black text-yellow-300 uppercase tracking-wide flex items-center gap-1.5 truncate">
                     <span>Jogos Encerrados</span>
@@ -454,24 +414,24 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
                       {pendingFinishedCount}
                     </span>
                     <span className="text-[10px] text-yellow-400/80 font-semibold lowercase">
-                      (aguardando resultado)
+                      (bloqueado)
                     </span>
                   </p>
                   <p className="text-[11px] text-yellow-200/90 truncate">
                     {pendingFinishedCount === 1
-                      ? "1 aposta possui jogo já encerrado aguardando resolução de Green/Red para atualizar os potes."
-                      : `${pendingFinishedCount} apostas possuem jogos já encerrados aguardando resolução de Green/Red para atualizar os potes.`}
+                      ? "1 aposta possui jogo já encerrado aguardando resolução."
+                      : `${pendingFinishedCount} apostas possuem jogos já encerrados aguardando resolução.`}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
-                  onClick={() => setActiveTab("games")}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                  disabled
+                  className="bg-yellow-400/50 text-gray-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow flex items-center gap-1.5 cursor-not-allowed"
                 >
-                  <span>Resolver nos Jogos</span>
-                  <span>➜</span>
+                  <span>Bloqueado</span>
+                  <span>⛔</span>
                 </button>
               </div>
             </div>
@@ -479,14 +439,14 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
         )}
       </header>
 
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-40 h-16">
+      {/* Bottom nav (INTERDITADO / NÃO-CLICÁVEL) */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-40 h-16 pointer-events-none opacity-30 cursor-not-allowed select-none">
         <div className="max-w-2xl mx-auto flex h-full items-center">
           {navTabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 relative flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors ${
+              disabled
+              className={`flex-1 relative flex-col items-center justify-center h-full py-1 gap-0.5 sm:gap-1 transition-colors pointer-events-none ${
                 tab.hideOnMobile ? "hidden sm:flex" : "flex"
               } ${
                 activeTab === tab.id
