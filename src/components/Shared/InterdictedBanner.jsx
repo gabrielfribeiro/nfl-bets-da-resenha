@@ -116,8 +116,8 @@ export default function InterdictedBanner() {
 
       {/* MODAL FIXO DE INTERDIÇÃO (BLOQUEADO: SOMENTE O COMISSÁRIO PODE FECHAR) */}
       {!modalDismissed && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-gray-950 border-4 border-yellow-400 text-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-[0_0_50px_rgba(234,179,8,0.35)] relative overflow-hidden my-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 animate-in fade-in duration-200 overflow-y-auto pointer-events-none">
+          <div className="bg-gray-950/95 border-4 border-yellow-400 text-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-[0_10px_50px_rgba(0,0,0,0.9)] relative overflow-hidden my-auto pointer-events-auto">
             {/* Faixa Zebrada no topo do modal */}
             <div
               className="h-5 w-full absolute top-0 left-0 border-b-2 border-black"
