@@ -117,10 +117,98 @@ export default function InterdictedBanner() {
       {/* MODAL FIXO DE INTERDIÇÃO (BLOQUEADO: SOMENTE O COMISSÁRIO PODE FECHAR) */}
       {!modalDismissed && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 animate-in fade-in duration-200 overflow-y-auto pointer-events-none">
-          <div className="bg-gray-950/95 border-4 border-yellow-400 text-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-[0_10px_50px_rgba(0,0,0,0.9)] relative overflow-hidden my-auto pointer-events-auto">
+          
+          {/* SELOS OFICIAIS FLUTUANTES NO FUNDO DA TELA DE BLOQUEIO (DESKTOP/TABLET) */}
+          {/* Selo 1: Verde Oval - Cadê o Comissário */}
+          <div 
+            className="hidden md:flex fixed left-4 lg:left-12 top-1/3 -translate-y-1/2 z-40 pointer-events-none select-none animate-seal-float"
+            style={{ "--rot": "-9deg" }}
+          >
+            <div className="w-52 h-32 rounded-[50%] border-4 border-dashed border-emerald-500/80 bg-emerald-950/85 text-emerald-400 p-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.8)] backdrop-blur-sm flex flex-col items-center justify-center text-center rotate-[-9deg]">
+              <span className="text-[8px] font-black uppercase tracking-widest text-emerald-300">
+                DEPARTAMENTO DO LOSS
+              </span>
+              <span className="text-xl my-0.5">🕵️‍♂️</span>
+              <span className="text-xs font-black uppercase tracking-tight text-white leading-tight">
+                CADÊ O POTE, COMISSÁRIO?
+              </span>
+              <span className="text-[8px] font-extrabold text-emerald-300 mt-0.5 uppercase">
+                AUDITORIA DE FUGA APROVADA
+              </span>
+              <span className="text-[7px] text-emerald-400/80 font-mono mt-0.5">
+                REF: PIX-SUMIU-0800
+              </span>
+            </div>
+          </div>
+
+          {/* Selo 2: Dourado / Cera - Imposto Sobre o Green */}
+          <div 
+            className="hidden md:flex fixed right-4 lg:right-12 top-2/3 -translate-y-1/2 z-40 pointer-events-none select-none animate-seal-float-delayed"
+            style={{ "--rot": "8deg" }}
+          >
+            <div className="w-48 h-48 rounded-full border-4 border-double border-amber-500/80 bg-amber-950/85 text-amber-300 p-3 shadow-[0_8px_30px_rgba(0,0,0,0.8)] backdrop-blur-sm flex flex-col items-center justify-center text-center rotate-[8deg]">
+              <span className="text-[8px] font-black uppercase tracking-widest text-amber-400">
+                TRIBUTAÇÃO DO AMOR
+              </span>
+              <span className="text-2xl my-1">📜</span>
+              <span className="text-xs font-black uppercase tracking-tight text-white leading-tight">
+                IMPOSTO SOBRE O GREEN
+              </span>
+              <span className="text-[9px] font-extrabold text-amber-200 mt-0.5 uppercase">
+                RECOLHIDO COM SUCESSO
+              </span>
+              <span className="text-[7px] text-amber-400/80 mt-1">
+                LÍQUIDO A RECEBER: R$ 0,14
+              </span>
+            </div>
+          </div>
+
+          {/* CARTÃO PRINCIPAL DO LAUDO (COM SELOS CARIMBADOS NAS PONTAS) */}
+          <div className="bg-gray-950/95 border-4 border-yellow-400 text-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-[0_10px_50px_rgba(0,0,0,0.9)] relative my-auto pointer-events-auto">
+            
+            {/* CARIMBO RETANGULAR VERMELHO: AS BETS FIZERAM O L */}
+            <div 
+              className="absolute -top-4 -right-3 sm:-top-5 sm:-right-5 z-30 pointer-events-none select-none animate-seal-float"
+              style={{ "--rot": "12deg" }}
+            >
+              <div className="border-4 border-double border-red-500/90 text-red-500 bg-red-950/90 px-3.5 py-1.5 rounded-xl shadow-2xl backdrop-blur-sm flex flex-col items-center justify-center text-center rotate-[12deg]">
+                <span className="text-[8px] font-black uppercase tracking-widest text-red-300 border-b border-red-500/40 pb-0.5 w-full">
+                  MINISTÉRIO DO LOSS
+                </span>
+                <span className="text-xs sm:text-sm font-black tracking-tight text-red-400 mt-0.5">
+                  AS BETS FIZERAM O L
+                </span>
+                <span className="text-[8px] font-bold text-red-200 uppercase tracking-tight">
+                  ★ TAXAÇÃO DE 92% APLICADA ★
+                </span>
+              </div>
+            </div>
+
+            {/* SELO CIRCULAR AZUL: MINHA BET MINHA VIDA */}
+            <div 
+              className="absolute -bottom-4 -left-3 sm:-bottom-5 sm:-left-5 z-30 pointer-events-none select-none animate-seal-float-delayed"
+              style={{ "--rot": "-11deg" }}
+            >
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-dashed border-cyan-400/90 bg-cyan-950/90 text-cyan-300 p-1 flex flex-col items-center justify-center text-center shadow-2xl backdrop-blur-sm rotate-[-11deg]">
+                <span className="text-[7px] font-black tracking-widest uppercase text-cyan-400 leading-none">
+                  REPÚBLICA DAS BETS
+                </span>
+                <span className="text-base sm:text-lg my-0.5">🏛️</span>
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-white leading-tight">
+                  CONFISCADO
+                </span>
+                <span className="text-[7px] sm:text-[8px] font-black text-cyan-200 uppercase leading-none">
+                  MINHA BET MINHA VIDA
+                </span>
+                <span className="text-[6px] text-cyan-400/80 mt-0.5">
+                  PORTARIA Nº 013/FAZENDA
+                </span>
+              </div>
+            </div>
+
             {/* Faixa Zebrada no topo do modal */}
             <div
-              className="h-5 w-full absolute top-0 left-0 border-b-2 border-black"
+              className="h-5 w-full absolute top-0 left-0 border-b-2 border-black rounded-t-[20px] overflow-hidden"
               style={{
                 backgroundImage:
                   "repeating-linear-gradient(45deg, #000, #000 14px, #facc15 14px, #facc15 28px)",

@@ -80,3 +80,21 @@ select option {
 .animate-coin-flip {
   animation: coinFlip 1.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
+
+@keyframes sealFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(var(--rot, 0deg));
+  }
+  50% {
+    transform: translateY(-8px) rotate(var(--rot, 0deg));
+  }
+}
+
+.animate-seal-float {
+  animation: sealFloat 4s ease-in-out infinite;
+}
+
+.animate-seal-float-delayed {
+  animation: sealFloat 5s ease-in-out infinite 1.8s;
+}
+
