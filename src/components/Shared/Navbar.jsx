@@ -185,17 +185,17 @@ export default function Navbar({ activeTab, setActiveTab, onOpenShareModal }) {
 
           {/* Right Controls */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {/* Total League Pot Card (Interditado/Bloqueado) */}
+            {/* Total League Pot Card (Interditado/Bloqueado - Confiscado) */}
             <div
-              title="Site interditado pelo STF / Faz o L"
-              className="h-11 px-2.5 sm:px-4 flex flex-col items-center justify-center text-center bg-gradient-to-br from-gray-900/90 to-gray-950/90 border border-yellow-400/20 rounded-xl shadow-inner pointer-events-none opacity-40 cursor-not-allowed select-none"
+              title="Pote confiscado para o programa Minha Bet Minha Vida"
+              className="h-11 px-2 sm:px-3.5 flex flex-col items-center justify-center text-center bg-gradient-to-br from-red-950/40 via-gray-900/90 to-gray-950/90 border border-red-500/40 rounded-xl shadow-inner pointer-events-none opacity-60 cursor-not-allowed select-none"
             >
-              <span className="text-[9px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-extrabold leading-none block">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-gray-400 font-extrabold leading-none block">
                 <span className="hidden sm:inline">Pote Geral</span>
                 <span className="sm:hidden">Pote</span>
               </span>
-              <span className="text-yellow-400 font-black text-xs sm:text-base leading-none mt-0.5 sm:mt-1 block">
-                R$ {totalPot.toFixed(2)}
+              <span className="text-red-400 font-black text-xs sm:text-sm uppercase tracking-wider leading-none mt-0.5 sm:mt-1 block">
+                Confiscado
               </span>
             </div>
 

@@ -9,6 +9,9 @@ const __dirname = path.dirname(__filename)
 
 function formatTrackTitle(filename) {
   const nameWithoutExt = filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '')
+  if (nameWithoutExt.toLowerCase() === 'faz-o-l-bolao') {
+    return 'Faz o L Bolão (Pagode)'
+  }
   return nameWithoutExt
     .split(/[-_]+/)
     .filter(Boolean)
@@ -18,6 +21,7 @@ function formatTrackTitle(filename) {
 
 function getTrackEmoji(name) {
   const lower = name.toLowerCase()
+  if (lower.includes('faz o l') || lower.includes('faz-o-l')) return '🪕'
   if (lower.includes('rock') || lower.includes('guitar')) return '🎸'
   if (lower.includes('pagode') || lower.includes('samba')) return '🪕'
   if (lower.includes('piseiro') || lower.includes('forro')) return '🎹'
@@ -39,7 +43,16 @@ function audioScannerPlugin() {
       const files = fs
         .readdirSync(audioDir)
         .filter((f) => /\.(mp3|wav|ogg|m4a)$/i.test(f))
-        .sort((a, b) => a.localeCompare(b))
+        .sort((a, b) => {
+          const aLower = a.toLowerCase()
+          const bLower = b.toLowerCase()
+          // faz-o-l sempre em primeiro lugar absoluto
+          const aIsFazOL = aLower.includes('faz-o-l') || aLower.includes('faz_o_l')
+          const bIsFazOL = bLower.includes('faz-o-l') || bLower.includes('faz_o_l')
+          if (aIsFazOL && !bIsFazOL) return -1
+          if (!aIsFazOL && bIsFazOL) return 1
+          return a.localeCompare(b)
+        })
 
       const playlist = files.map((file, idx) => {
         const title = formatTrackTitle(file)
