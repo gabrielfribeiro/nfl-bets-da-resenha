@@ -2,7 +2,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 const FALLBACK_PLAYLIST = [
   {
-    id: "track-0-pagode-da-resenha-mp3",
+    id: "track-0-faz-o-l-bolao-mp3",
+    filename: "faz-o-l-bolao.mp3",
+    title: "Faz o L Bolão (Pagode)",
+    emoji: "🪕",
+    src: "/audio/faz-o-l-bolao.mp3",
+  },
+  {
+    id: "track-1-pagode-da-resenha-mp3",
     filename: "pagode-da-resenha.mp3",
     title: "Pagode Da Resenha",
     emoji: "🪕",
@@ -56,12 +63,20 @@ export default function MusicPlayer() {
         if (Array.isArray(data) && data.length > 0) {
           setPlaylist(data);
 
-          // Restaura última música selecionada salva
-          const savedId = localStorage.getItem("resenha_music_track_id");
-          if (savedId) {
-            const idx = data.findIndex((t) => t.id === savedId || t.filename === savedId);
-            if (idx !== -1) {
-              setCurrentIndex(idx);
+          // Prioriza o lançamento "faz-o-l-bolao" na primeira visita após esta atualização
+          const featuredKey = "v2_faz_o_l_featured";
+          const hasFeatured = localStorage.getItem("resenha_music_featured_version");
+          if (hasFeatured !== featuredKey) {
+            localStorage.setItem("resenha_music_featured_version", featuredKey);
+            localStorage.setItem("resenha_music_track_id", "track-0-faz-o-l-bolao-mp3");
+            setCurrentIndex(0);
+          } else {
+            const savedId = localStorage.getItem("resenha_music_track_id");
+            if (savedId) {
+              const idx = data.findIndex((t) => t.id === savedId || t.filename === savedId);
+              if (idx !== -1) {
+                setCurrentIndex(idx);
+              }
             }
           }
         }
